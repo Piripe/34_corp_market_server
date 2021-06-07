@@ -16,6 +16,7 @@
         "mongodb": "^3.6.9",
         "node-fetch": "^2.6.1"
     },
+    "typings": "typings/index.d.ts",
     "devDependencies": {
         "@types/express": "^4.17.12",
         "@types/mongodb": "^3.6.17",
