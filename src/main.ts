@@ -1,10 +1,11 @@
 import express from "express";
 import config from "./config";
-import mongodb, { ReplSet } from "mongodb";
+import mongodb from "mongodb";
 import { createHash } from "crypto";
 import fetch from "node-fetch";
 
 import Market from "./market";
+import Sellers from "./sellers";
 
 
 const app = express();
@@ -13,6 +14,7 @@ const app = express();
 let mongoCollection: mongodb.Collection;
 
 let market: Market;
+let sellers: Sellers;
 
 start();
 
@@ -37,9 +39,15 @@ app.use("/api", async (req, res, next) => {
 app.use("/api", express.json());
 
 
-app.get(/^\/api\/market\/items\/([a-z1-9_]+)$/i, async (req, res) => {
+app.get(/^\/api\/market\/items\/?$/i, async (req, res) => {
+    market.getAllItems().then(items => res.json(items)).catch(reason => {
+        res.json({ error: reason });
+    });
+});
+
+app.get(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     // @ts-ignore
-    let match = req.url.match(/^\/api\/market\/items\/([a-z1-9_]+)$/i);
+    let match = req.url.match(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i);
     if (match) {
         var id = match[1];
         if (!id) {
@@ -60,17 +68,13 @@ app.get(/^\/api\/market\/items\/([a-z1-9_]+)$/i, async (req, res) => {
     });
 });
 
-app.get("/api/market/items", async (req, res) => {
-    market.getAllItems().then(items => res.json(items)).catch(reason => {
-        res.json({ error: reason });
-    });
-});
 
 
 
 
-app.get(/^\/api\/market\/items\/[a-z1-9_]+\/sellers$/i, (req, res) => {
-    let match = req.url.match(/^\/api\/market\/items\/([a-z1-9_]+)\/sellers$/i);
+
+app.get(/^\/api\/market\/items\/[a-z0-9_]+\/sellers\/?$/i, (req, res) => {
+    let match = req.url.match(/^\/api\/market\/items\/([a-z0-9_]+)\/sellers\/?$/i);
     if (match) {
         var id = match[1];
         if (!id) {
@@ -90,9 +94,64 @@ app.get(/^\/api\/market\/items\/[a-z1-9_]+\/sellers$/i, (req, res) => {
     });
 });
 
-app.get(/^\/api\/market\/items\/[a-z1-9_]+\/sellers\/[a-z1-9]+$/i, (req, res) => {
+app.get(/^\/api\/market\/items\/([a-z0-9_]+)\/sellers\/([a-z0-9_]+)\/?$/i, (req, res) => {
+    let match = req.url.match(/^\/api\/market\/items\/([a-z0-9_]+)\/sellers\/([a-z0-9_]+)\/?$/i);
+    if (match) {
+        var itemId = match[1];
+        if (!itemId) {
+            res.json({ error: "No item id found" });
+            return;
+        }
 
+        var sellerId = match[2];
+        if (!sellerId) {
+            res.json({ error: "No seller id found" });
+            return;
+        }
+    }
+    else {
+        res.json({ error: "No item id found" });
+        return;
+    }
+
+    market.getItemSeller(itemId, sellerId).then(seller => res.json(seller)).catch(reason => res.json({ error: reason }));
 });
+
+
+
+
+app.get(/^\/api\/sellers\/?$/i, async (req, res) => {
+    sellers.getSellers().then(sellers => res.json(sellers)).catch(reason => {
+        res.json({ error: reason });
+    });
+});
+
+app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
+    // @ts-ignore
+    let match = req.url.match(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i);
+    if (match) {
+        var id = match[1];
+        if (!id) {
+            res.json({ error: "No seller id found" });
+            return;
+        }
+    }
+    else {
+        res.json({ error: "No seller id found" });
+        return;
+    }
+
+
+    sellers.getSeller(id).then(seller => {
+        res.json(seller);
+    }).catch(reason => {
+        res.json({ error: reason });
+    });
+});
+
+
+
+
 
 
 app.use("/api", (req, res) => {
@@ -167,6 +226,7 @@ async function start() {
     let db = (await mongodb.connect(config.mongoDBUri, { useUnifiedTopology: true })).db("34CorpMarket");
     mongoCollection = db.collection("accounts");
     market = new Market(db.collection("products"), db.collection("sellers"));
+    sellers = new Sellers(db.collection("sellers"));
     app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 
