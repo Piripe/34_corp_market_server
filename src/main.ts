@@ -32,7 +32,7 @@ app.use((req, res, next) => {
 
 app.use("/api", async (req, res, next) => {
     isAuthorized(req.headers.authorization).then(next).catch(reason => {
-        res.status(401).json({ error: reason });
+        res.status(401).json({ error: reason.toString() });
     });
 });
 
@@ -41,7 +41,7 @@ app.use("/api", express.json());
 
 app.get(/^\/api\/market\/items\/?$/i, async (req, res) => {
     market.getAllItems().then(items => res.json(items)).catch(reason => {
-        res.json({ error: reason });
+        res.json({ error: reason.toString() });
     });
 });
 
@@ -64,7 +64,7 @@ app.get(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     market.getItem(id).then(item => {
         res.json(item);
     }).catch(reason => {
-        res.json({ error: reason });
+        res.json({ error: reason.toString() });
     });
 });
 
@@ -90,7 +90,7 @@ app.get(/^\/api\/market\/items\/[a-z0-9_]+\/sellers\/?$/i, (req, res) => {
     market.getItemSellers(id).then(sellers => {
         res.json(sellers);
     }).catch(reason => {
-        res.json({ error: reason });
+        res.json({ error: reason.toString() });
     });
 });
 
@@ -114,7 +114,7 @@ app.get(/^\/api\/market\/items\/([a-z0-9_]+)\/sellers\/([a-z0-9_]+)\/?$/i, (req,
         return;
     }
 
-    market.getItemSeller(itemId, sellerId).then(seller => res.json(seller)).catch(reason => res.json({ error: reason }));
+    market.getItemSeller(itemId, sellerId).then(seller => res.json(seller)).catch(reason => res.json({ error: reason.toString() }));
 });
 
 
@@ -122,7 +122,7 @@ app.get(/^\/api\/market\/items\/([a-z0-9_]+)\/sellers\/([a-z0-9_]+)\/?$/i, (req,
 
 app.get(/^\/api\/sellers\/?$/i, async (req, res) => {
     sellers.getSellers().then(sellers => res.json(sellers)).catch(reason => {
-        res.json({ error: reason });
+        res.json({ error: reason.toString() });
     });
 });
 
@@ -145,7 +145,7 @@ app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     sellers.getSeller(id).then(seller => {
         res.json(seller);
     }).catch(reason => {
-        res.json({ error: reason });
+        res.json({ error: reason.toString() });
     });
 });
 
@@ -202,7 +202,7 @@ app.post("/unauthorizedapi/newAccount", (req, res) => {
     createAccount(req.body.username.toString(), req.body.password.toString()).then(() => {
         res.json({ success: true });
     }).catch(reason => {
-        res.json({ error: reason });
+        res.json({ error: reason.toString() });
     });
 });
 

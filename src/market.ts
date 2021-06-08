@@ -17,7 +17,14 @@ export default class Market {
                 let returnItems: ItemApi[] = [];
                 for (const index in items) {
                     const item = items[index];
-                    returnItems[index].sellers = await this.getSellersData(item);
+                    returnItems[index] = {
+                        id: item.id,
+                        name: item.name,
+                        description: item.description,
+                        thumbnail: item.thumbnail,
+                        category: item.category,
+                        sellers: await this.getSellersData(item)
+                    }
                 }
                 resolve(returnItems);
             }).catch(reject);
@@ -27,16 +34,21 @@ export default class Market {
     async getItem(id: string) {
         return new Promise<ItemApi>((resolve, reject) => {
             this.products.findOne({ id: id }, { projection: { _id: 0 } }).then(item => {
-                let returnItem: ItemApi;
                 if (item === null) {
                     reject("No item with this id found")
                     return;
                 }
                 this.getSellersData(item).then(sellers => {
-                    returnItem.sellers = sellers;
-                    resolve(returnItem);
-                });
-            });
+                    resolve({
+                        id: item.id,
+                        name: item.name,
+                        description: item.description,
+                        thumbnail: item.thumbnail,
+                        category: item.category,
+                        sellers: sellers
+                    });
+                }).catch(reject);
+            }).catch(reject);
         });
     }
 
