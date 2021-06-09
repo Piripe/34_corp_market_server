@@ -1,24 +1,74 @@
 import express from "express";
 import config from "./config";
 import mongodb from "mongodb";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import fetch from "node-fetch";
 
 import Market from "./market";
 import Sellers from "./sellers";
 
+import { UserApi, UserDatabase } from "typings/index";
+
 
 const app = express();
 
 // @ts-ignore
-let mongoCollection: mongodb.Collection;
+let mongoCollection: mongodb.Collection<AccountDatabase>;
 
 let market: Market;
 let sellers: Sellers;
 
+
+const authorizationMiddleware = async (req: any, res: any, next: any) => {
+
+    if (!req.headers.authorization) {
+        res.status(401).json({ error: "No authorization header" });
+        return;
+    }
+
+    let authorizationMethod = req.headers.authorization.split(" ")[0];
+
+
+    if (authorizationMethod.toLowerCase() !== "token") {
+        res.status(401).json({ error: "Authorization method not implemented yet" });
+        return;
+    }
+
+    let token = req.headers.authorization.split(" ")[1];
+
+    if (!token) {
+        res.status(401).json({ error: "No token found" });
+        return;
+    }
+
+
+    authorize(token).then((user => {
+        req.data = {};
+        req.data.user = user;
+        next();
+    })).catch(reason => {
+        res.status(401).json({ error: reason.toString() });
+    });
+};
+
+
+
+
+
 start();
 
 
+
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Method", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+
+    if (req.method === 'OPTIONS')
+        res.status(204).end();
+    else
+        next();
+});
 
 app.use((req, res, next) => {
     console.log(`Request at ${req.url} from ${req.ip}`);
@@ -27,16 +77,64 @@ app.use((req, res, next) => {
 
 
 
-
 // api
 
-app.use("/api", async (req, res, next) => {
-    isAuthorized(req.headers.authorization).then(next).catch(reason => {
-        res.status(401).json({ error: reason.toString() });
+
+app.use("/api", express.json());
+
+
+app.post(/^\/api\/login\/?$/i, (req, res) => {
+
+    if (!req.body) {
+        res.status(401).json({ error: "The body is null" });
+        return;
+    }
+
+    connect(req.body).then(token => res.json({ token: token })).catch(reason => res.json({ errror: reason.toString() }));
+});
+
+
+
+
+
+app.post(/^\/api\/newAccount\/?$/i, (req, res) => {
+    if (!req.body.username) {
+        res.status(400).json({ error: "Username required" });
+        return;
+    }
+
+    if (req.body.username.includes(" ")) {
+        res.status(400).json({ error: "Username must not contains space" });
+        return;
+    }
+
+    if (!/^[\x00-\x7F]*$/.test(req.body.username)) {
+        res.status(400).json({ error: "Username must contains only ASCII characters" });
+        return;
+    }
+
+    if (!req.body.password) {
+        res.status(400).json({ error: "Password required" });
+        return;
+    }
+
+    if (req.body.password.includes(" ")) {
+        res.status(400).json({ error: "Password must not contains space" });
+        return;
+    }
+
+    if (!/^[\x00-\x7F]*$/.test(req.body.password)) {
+        res.status(400).json({ error: "Password must contains only ASCII characters" });
+        return;
+    }
+
+    createAccount(req.body.username.toString(), req.body.password.toString()).then(() => {
+        res.json({ success: true });
+    }).catch(reason => {
+        res.json({ error: reason.toString() });
     });
 });
 
-app.use("/api", express.json());
 
 
 app.get(/^\/api\/market\/items\/?$/i, async (req, res) => {
@@ -127,7 +225,6 @@ app.get(/^\/api\/sellers\/?$/i, async (req, res) => {
 });
 
 app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
-    // @ts-ignore
     let match = req.url.match(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i);
     if (match) {
         var id = match[1];
@@ -151,7 +248,9 @@ app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
 
 
 
-
+app.get(/^\/api\/users\/@me\/?$/, authorizationMiddleware, (req, res) => {
+    res.json(getUserApi((req as any).data.user));
+});
 
 
 app.use("/api", (req, res) => {
@@ -159,57 +258,8 @@ app.use("/api", (req, res) => {
     res.status(404).contentType("text").end("Not found");
 });
 
+
 // End api
-
-
-
-
-
-// Api no authorization
-
-app.use("/unauthorizedapi/", express.json());
-app.post("/unauthorizedapi/newAccount", (req, res) => {
-    if (!req.body.username) {
-        res.status(400).json({ error: "Username required" });
-        return;
-    }
-
-    if (req.body.username.includes(" ")) {
-        res.status(400).json({ error: "Username must not contains space" });
-        return;
-    }
-
-    if (!/^[\x00-\x7F]*$/.test(req.body.username)) {
-        res.status(400).json({ error: "Username must contains only ASCII characters" });
-        return;
-    }
-
-    if (!req.body.password) {
-        res.status(400).json({ error: "Password required" });
-        return;
-    }
-
-    if (req.body.password.includes(" ")) {
-        res.status(400).json({ error: "Password must not contains space" });
-        return;
-    }
-
-    if (!/^[\x00-\x7F]*$/.test(req.body.password)) {
-        res.status(400).json({ error: "Password must contains only ASCII characters" });
-        return;
-    }
-
-    createAccount(req.body.username.toString(), req.body.password.toString()).then(() => {
-        res.json({ success: true });
-    }).catch(reason => {
-        res.json({ error: reason.toString() });
-    });
-});
-
-
-
-// End api no authorization
-
 
 
 
@@ -230,29 +280,12 @@ async function start() {
     app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 
-async function isAuthorized(authorization?: string) {
-
-    return new Promise<void>((resolve, reject) => {
-        if (!authorization) {
-            reject("Authorization header required");
-            return;
-        }
-
-
-        let username = authorization.split(" ")[0];
-        let password = authorization.split(" ")[1];
-
-        if (!username || !password) {
-            reject("Username and password required")
-            return;
-        }
-
-        let passwordHash = createHash("sha256").update(password).digest("hex");
-
-        mongoCollection.find({ username: username, password: passwordHash }, { projection: { _id: 0 } }).toArray().then(result => {
-            if (result.length === 1)
-                resolve();
-            else reject("Wrong username or password");
+async function authorize(token: string) {
+    return new Promise<UserDatabase>((resolve, reject) => {
+        mongoCollection.find({ token: token }, { projection: { _id: 0 } }).toArray().then(clients => {
+            if (clients.length === 1)
+                resolve(clients[0]);
+            else reject("Wrong token");
         });
     });
 }
@@ -271,16 +304,54 @@ async function createAccount(username: string, password: string) {
         let passwordHash = createHash("sha256").update(password).digest("hex");
 
         mongoCollection.findOne({ username: username }, { projection: { _id: 0 } }).then(result => {
-            if (result !== null) {
-                reject("Username already exist");
-                return;
-            }
+            generateToken().then(token => {
+                if (result !== null) {
+                    reject("Username already exist");
+                    return;
+                }
 
-            mongoCollection.insertOne({
-                username: username,
-                password: passwordHash
-            }).then(() => resolve()).catch(reject);
-
-        })
+                mongoCollection.insertOne({
+                    username: username,
+                    password: passwordHash,
+                    token: token
+                }).then(() => resolve).catch(reject);
+            }).catch(reject);
+        }).catch(reject);
     });
+
+    async function generateToken() {
+        let token = randomBytes(48).toString("base64");
+        return token;
+    }
+}
+
+async function connect(body?: any): Promise<string> {
+    return new Promise((resolve, reject) => {
+        if (!body) {
+            reject("Body required");
+            return;
+        }
+
+
+        const { username, password } = body;
+
+        if (!username || !password) {
+            reject("Username and password required")
+            return;
+        }
+
+        let passwordHash = createHash("sha256").update(password).digest("hex");
+
+        mongoCollection.find({ username: username, password: passwordHash }, { projection: { _id: 0 } }).toArray().then(result => {
+            if (result.length === 1)
+                resolve(result[0].token);
+            else reject("Wrong username or password");
+        });
+    });
+}
+
+function getUserApi(user: UserDatabase): UserApi {
+    return {
+        username: user.username
+    }
 }

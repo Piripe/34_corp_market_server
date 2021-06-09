@@ -52,7 +52,7 @@ export default class Market {
         });
     }
 
-    async getSellersData(item: ItemDatabase) {
+    private async getSellersData(item: ItemDatabase) {
         return new Promise<SellerWithItemSelected[]>(async (resolve, reject) => {
 
             this.sellers.find({ id: { $in: item.sellers } }, { projection: { _id: 0 } }).toArray().then(sellers => {
