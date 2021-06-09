@@ -27,11 +27,11 @@ export default class Sellers {
         });
     }
 
-    private sellerDatabaseToSellerApi(sellerApi: SellerApi) {
+    private sellerDatabaseToSellerApi(sellerDatabase: SellerDatabase) {
         return {
-            name: sellerApi.name,
-            id: sellerApi.id,
-            items: sellerApi.items
+            name: sellerDatabase.name,
+            id: sellerDatabase.id,
+            items: sellerDatabase.items
         };
     }
 }
