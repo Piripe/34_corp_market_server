@@ -77,9 +77,12 @@ interface ItemApi {
 interface UserDatabase {
     username: string,
     password: string,
-    token: string
+    token: string,
+    sold: number,
+    id: string
 }
 
 interface UserApi {
-    username: string
+    username: string,
+    id: string
 }

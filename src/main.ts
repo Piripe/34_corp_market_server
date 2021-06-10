@@ -6,6 +6,7 @@ import fetch from "node-fetch";
 
 import Market from "./market";
 import Sellers from "./sellers";
+import Bank from "./Bank"
 
 import { UserApi, UserDatabase } from "typings/index";
 
@@ -17,6 +18,7 @@ let mongoCollection: mongodb.Collection<AccountDatabase>;
 
 let market: Market;
 let sellers: Sellers;
+let bank: Bank;
 
 
 const authorizationMiddleware = async (req: any, res: any, next: any) => {
@@ -71,7 +73,7 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-    console.log(`Request at ${req.url} from ${req.ip}`);
+    console.log(`${req.method} ${req.url} from ${req.ip}`);
     next();
 });
 
@@ -249,7 +251,41 @@ app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
 
 
 app.get(/^\/api\/users\/@me\/?$/, authorizationMiddleware, (req, res) => {
+
+
+    if (!(req as any).data.user.id) {
+        res.status(500).end("Internal server error");
+    }
+
     res.json(getUserApi((req as any).data.user));
+});
+
+app.post(/^\/api\/bank\/transfer\/?$/i, authorizationMiddleware, (req, res) => {
+
+    if (!req.body) {
+        res.json({ error: "No body" });
+        return;
+    }
+
+    if (!req.body.toUserID) {
+        res.json({ error: "toUserID is required in the body" });
+        return;
+    }
+
+    if (!req.body.amount) {
+        res.json({ error: "amount is required in the body" });
+        return;
+    }
+
+    if (!(req as any).data.user.id) {
+        res.status(500).end("Internal server error");
+    }
+
+    bank.transfertSold((req as any).data.user.id, req.body.toUserID, req.body.amount).then(() => {
+        res.json({ succes: true });
+    }).catch(reason => {
+        res.json({ error: reason.toString() });
+    })
 });
 
 
@@ -277,6 +313,7 @@ async function start() {
     mongoCollection = db.collection("accounts");
     market = new Market(db.collection("products"), db.collection("sellers"));
     sellers = new Sellers(db.collection("sellers"));
+    bank = new Bank(db.collection("accounts"));
     app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 
@@ -352,6 +389,7 @@ async function connect(body?: any): Promise<string> {
 
 function getUserApi(user: UserDatabase): UserApi {
     return {
-        username: user.username
+        username: user.username,
+        id: user.id
     }
 }
