@@ -1,36 +1,54 @@
-import mongodb from "mongodb";
-import { UserDatabase } from "typings";
+import mariadb from "mariadb";
 
 export default class Market {
 
-    usersDb: mongodb.Collection<UserDatabase>;
+    db: mariadb.Pool;
 
-    constructor(usersDb: mongodb.Collection<UserDatabase>) {
-        this.usersDb = usersDb;
+    constructor(db: mariadb.Pool) {
+        this.db = db;
     }
 
     async modifySold(userId: string, amount: number) {
-        return new Promise<UserDatabase>((resolve, reject) => {
-            this.usersDb.findOneAndUpdate({ id: userId }, { $inc: { sold: parseFloat(amount.toString()) } }).then((result) => {
-                this.usersDb.findOne({ id: userId }).then(result => {
-                    if (result)
-                        resolve(result)
-                    else
-                        throw new Error("User is null");
-                }).catch(reject);
-            }).catch(reject);
-        });
+        let user = await this.db.query(`select id, sold from User where id = "${userId}"`);
+
+        if (!user[0])
+            throw "User not found";
+
+        user = user[0];
+
+        await this.db.query(`update User set sold = ${calcNewSold(user.sold, amount)} where id = ${user.id}`);
+
+
+        function calcNewSold(previousSold: number, transfertAmout: number) {
+
+            if (isNaN(previousSold))
+                throw "Previous sold must be a number";
+
+            if (isNaN(transfertAmout))
+                throw "Transfert amount must be a number";
+
+
+            let result = previousSold + transfertAmout;
+
+            if (result < 0)
+                throw "Not enought money";
+
+            return result;
+        }
     }
 
     async transfertSold(fromUserId: string, toUserID: string, amount: number) {
-        return new Promise<void>((resolve, reject) => {
-            Promise.all([
-                this.modifySold(fromUserId, -amount),
-                this.modifySold(toUserID, amount)
-            ]).then(([fromUserResult, toUserResult]) => {
-                resolve();
-            }).catch(reject);
-        });
-    }
 
+        amount = parseFloat(amount.toString());
+
+        if (isNaN(amount))
+            throw "Amount must be a number";
+
+        if (amount < 0)
+            throw "Amount must be positive";
+
+        await this.modifySold(fromUserId, -amount);
+        await this.modifySold(toUserID, amount);
+
+    }
 }

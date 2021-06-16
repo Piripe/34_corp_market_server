@@ -1,115 +1,46 @@
-import { ItemApi, ItemDatabase, SellerApi, SellerDatabase, SellerWithItemSelected } from "typings/index";
-import mongodb from "mongodb";
+import mariadb from "mariadb";
 
 export default class Market {
 
-    products: mongodb.Collection<ItemDatabase>;
-    sellers: mongodb.Collection<SellerDatabase>;
+    db: mariadb.Pool;
 
-    constructor(products: mongodb.Collection, sellers: mongodb.Collection) {
-        this.products = products;
-        this.sellers = sellers;
+    constructor(db: mariadb.Pool) {
+        this.db = db;
     }
 
     async getAllItems() {
-        return new Promise<ItemApi[]>((resolve, reject) => {
-            this.products.find({}, { projection: { _id: 0 } }).toArray().then(async items => {
-                let returnItems: ItemApi[] = [];
-                for (const index in items) {
-                    const item = items[index];
-                    returnItems[index] = {
-                        id: item.id,
-                        name: item.name,
-                        description: item.description,
-                        thumbnail: item.thumbnail,
-                        category: item.category,
-                        sellers: await this.getSellersData(item)
-                    }
-                }
-                resolve(returnItems);
-            }).catch(reject);
-        });
+        let items = await this.db.query("select name, id, description, thumbnail, category from Item");
+        let result_items = [];
+        for (const item of items) {
+            result_items.push(await this.getItem_sellers(item));
+        }
+        return result_items;
+
+
+    }
+
+    private async getItem_sellers(item: any): Promise<any> {
+        return new Promise(async (resolve) => {
+            let sellers = await this.db.query(`select Seller.name, Seller.description, Seller.id, seller_item.price, seller_item.stock from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.item_id = "${item.id}"`);
+            resolve({
+                category: item.category,
+                description: item.description,
+                id: item.id,
+                name: item.name,
+                thumbnail: item.thumbnail,
+                sellers: sellers
+            });
+        })
     }
 
     async getItem(id: string) {
-        return new Promise<ItemApi>((resolve, reject) => {
-            this.products.findOne({ id: id }, { projection: { _id: 0 } }).then(item => {
-                if (item === null) {
-                    reject("No item with this id found")
-                    return;
-                }
-                this.getSellersData(item).then(sellers => {
-                    resolve({
-                        id: item.id,
-                        name: item.name,
-                        description: item.description,
-                        thumbnail: item.thumbnail,
-                        category: item.category,
-                        sellers: sellers
-                    });
-                }).catch(reject);
-            }).catch(reject);
-        });
-    }
+        let item = await this.db.query(`select name, id, description, thumbnail, category from Item where id = "${id}"`);
 
-    private async getSellersData(item: ItemDatabase) {
-        return new Promise<SellerWithItemSelected[]>(async (resolve, reject) => {
+        if (!item[0])
+            throw "No item found";
 
-            this.sellers.find({ id: { $in: item.sellers } }, { projection: { _id: 0 } }).toArray().then(sellers => {
-                resolve(sellers.map(seller => this.getSellerData(seller, item)));
-            }).catch(reject);
+        return await this.getItem_sellers(item[0]);
 
-        });
-    }
-
-    private getSellerData(seller: SellerDatabase, item: ItemDatabase): SellerWithItemSelected {
-        let itemSeller = seller.items.find((i: any) => i.id === item.id);
-
-        if (itemSeller === undefined)
-            throw (`Seller ${seller.name} doesn't sell ${item.name}`);
-
-
-        return {
-            id: seller.id,
-            name: seller.name,
-            price: itemSeller.price,
-            stock: itemSeller.stock,
-        };
-    }
-
-    async getItemSellers(itemId: string) {
-        return new Promise<SellerWithItemSelected[]>((resolve, reject) => {
-            this.products.findOne({ id: itemId }, { projection: { _id: 0 } }).then(item => {
-                if (item === null) {
-                    reject("No item with this id found")
-                    return;
-                }
-                this.getSellersData(item).then(resolve).catch(reject);
-            });
-        });
-    }
-
-    async getItemSeller(itemId: string, sellerId: string) {
-        return new Promise<SellerWithItemSelected>((resolve, reject) => {
-            this.products.findOne({ id: itemId }, { projection: { _id: 0 } }).then(item => {
-                this.sellers.findOne({ id: sellerId }, { projection: { _id: 0 } }).then(seller => {
-                    if (seller === null) {
-                        reject("No seller with this id found")
-                        return;
-                    }
-                    if (item === null) {
-                        reject("No item with this id found")
-                        return;
-                    }
-                    try {
-                        resolve(this.getSellerData(seller, item));
-                    }
-                    catch (error) {
-                        reject(error);
-                    }
-                });
-            });
-        });
     }
 }
 
