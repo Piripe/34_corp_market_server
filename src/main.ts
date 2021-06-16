@@ -220,8 +220,7 @@ app.use(express.static(config.public, { extensions: ["html"], index: "index.html
 
 
 app.use((req, res) => {
-    //404 file
-    res.status(404).contentType("text").end("Not found");
+    res.sendFile(`${config.public}/index.html`);
 });
 
 
