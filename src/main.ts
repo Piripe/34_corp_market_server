@@ -13,9 +13,6 @@ const app = express();
 
 let db: mariadb.Pool;
 
-let market: Market;
-let bank: Bank;
-
 
 const authorizationMiddleware = async (req: any, res: any, next: any) => {
 
@@ -137,7 +134,7 @@ app.post(/^\/api\/newAccount\/?$/i, (req, res) => {
 
 
 app.get(/^\/api\/market\/items\/?$/i, async (req, res) => {
-    market.getAllItems().then(items => res.json(items)).catch(reason => {
+    Market.getAllItems().then(items => res.json(items)).catch(reason => {
         res.json({ error: reason.toString() });
     });
 });
@@ -158,7 +155,7 @@ app.get(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     }
 
 
-    market.getItem(id).then(item => {
+    Market.getItem(id).then(item => {
         res.json(item);
     }).catch(reason => {
         res.json({ error: reason.toString() });
@@ -198,7 +195,57 @@ app.post(/^\/api\/bank\/transfer\/?$/i, authorizationMiddleware, (req, res) => {
         res.status(500).end("Internal server error");
     }
 
-    bank.transfertSold((req as any).data.user.id, req.body.toUser, req.body.amount).then(() => {
+    Bank.transfertSold((req as any).data.user.id, req.body.toUser, req.body.amount).then(() => {
+        res.json({ success: true });
+    }).catch(reason => {
+        res.json({ error: reason.toString() });
+    })
+});
+
+app.post(/^\/api\/market\/pay/i, authorizationMiddleware, (req, res) => {
+    if (!req.body) {
+        res.json({ error: "No body" });
+        return;
+    }
+
+    if (!req.body.sellerId) {
+        res.json({ error: "sellerId is required in the body" });
+        return;
+    }
+
+    if (!req.body.amount) {
+        res.json({ error: "amount is required in the body" });
+        return;
+    }
+
+    if (!(req as any).data.user.id) {
+        res.status(500).end("Internal server error");
+    }
+
+    Market.pay((req as any).data.user.id, req.body.sellerId, req.body.amount).then(() => {
+        res.json({ success: true });
+    }).catch(reason => {
+        res.json({ error: reason.toString() });
+    })
+});
+
+
+app.post(/^\/api\/market\/buy/i, authorizationMiddleware, (req, res) => {
+    if (!req.body) {
+        res.json({ error: "No body" });
+        return;
+    }
+
+    if (!req.body.seller_item_id) {
+        res.json({ error: "seller_item_id is required in the body" });
+        return;
+    }
+
+    if (!(req as any).data.user.id) {
+        res.status(500).end("Internal server error");
+    }
+
+    Market.buy((req as any).data.user.id, req.body.seller_item_id).then(() => {
         res.json({ success: true });
     }).catch(reason => {
         res.json({ error: reason.toString() });
@@ -231,8 +278,8 @@ async function start() {
         password: config.db.password,
         database: config.db.dbName
     });
-    market = new Market(db);
-    bank = new Bank(db);
+    Market.init(db);
+    Bank.init(db);
     app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 
