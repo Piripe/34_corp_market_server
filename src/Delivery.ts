@@ -1,7 +1,7 @@
 
 
 export default class Delivery {
-    static createDelivery(userId: string, seller_item_id: string) {
+    static createDelivery() {
         console.warn("Delivery asked");
     }
 }

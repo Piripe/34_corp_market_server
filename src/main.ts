@@ -1,6 +1,6 @@
 import express from "express";
 import config from "./config";
-import { createHash, randomBytes } from "crypto";
+import crypto, { createHash, randomBytes } from "crypto";
 import fetch from "node-fetch";
 import mariadb from "mariadb";
 
@@ -124,7 +124,22 @@ app.post(/^\/api\/newAccount\/?$/i, (req, res) => {
         return;
     }
 
-    createAccount(req.body.username.toString(), req.body.password.toString()).then(() => {
+    if (!req.body.pikachu) {
+        res.status(400).json({ error: "pikachu required" });
+        return;
+    }
+
+    if (req.body.pikachu.includes(" ")) {
+        res.status(400).json({ error: "pikachu must not contains space" });
+        return;
+    }
+
+    if (!/^[\x00-\x7F]*$/.test(req.body.pikachu)) {
+        res.status(400).json({ error: "pikachu must contains only ASCII characters" });
+        return;
+    }
+
+    createAccount(req.body.username.toString(), req.body.password.toString(), req.body.pikachu.toString()).then(() => {
         res.json({ success: true });
     }).catch(reason => {
         res.json({ error: reason.toString() });
@@ -236,20 +251,19 @@ app.post(/^\/api\/market\/buy/i, authorizationMiddleware, (req, res) => {
         return;
     }
 
-    if (!req.body.seller_item_id) {
-        res.json({ error: "seller_item_id is required in the body" });
+    if (!Array.isArray(req.body)) {
+        res.json({ error: "Body must be an array" });
         return;
     }
 
-    if (!(req as any).data.user.id) {
-        res.status(500).end("Internal server error");
-    }
 
-    Market.buy((req as any).data.user.id, req.body.seller_item_id).then(() => {
+    Market.buy((req as any).data.user.id, req.body).then(() => {
         res.json({ success: true });
     }).catch(reason => {
         res.json({ error: reason.toString() });
     })
+
+
 });
 
 
@@ -293,13 +307,17 @@ async function authorize(token: string) {
 }
 
 
-async function createAccount(username: string, password: string) {
+async function createAccount(username: string, password: string, pikachu: string) {
 
     let response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`);
 
     if (response.status === 204) {
         throw `${username} is not a Minecraft username`;
     }
+
+
+    if (!isValidePikachu())
+        throw "Pikachu not valid";
 
 
     if ((await db.query(`select id from User where name = "${username}"`))[0]) {
@@ -317,6 +335,10 @@ async function createAccount(username: string, password: string) {
     function generateToken() {
         let token = randomBytes(48).toString("base64");
         return token;
+    }
+
+    function isValidePikachu() {
+        return Buffer.from(username).toString("base64") === pikachu;
     }
 }
 

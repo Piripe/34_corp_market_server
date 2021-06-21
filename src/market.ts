@@ -11,7 +11,8 @@ export default class Market {
     }
 
     static async getAllItems() {
-        let items = await this.db.query("select name, id, description, thumbnail, category from Item");
+        let items = await this.db.query("select name, id, description, thumbnail, category, full_description from Item");
+
         let result_items = [];
         for (const item of items) {
             result_items.push(await this.getItem_sellers(item));
@@ -30,7 +31,8 @@ export default class Market {
                 id: item.id,
                 name: item.name,
                 thumbnail: item.thumbnail,
-                sellers: sellers
+                sellers: sellers,
+                full_description: item.full_description
             });
         })
     }
@@ -43,8 +45,6 @@ export default class Market {
 
         return await this.getItem_sellers(item[0]);
     }
-
-
 
     static async pay(userId: string, sellerId: string, amount: number) {
         let user = await this.db.query(`select id, sold from User where id = "${userId}"`);
@@ -68,7 +68,7 @@ export default class Market {
         await Bank.modifySold(sellerId, await Bank.calcTaxe(amount), "Seller");
     }
 
-    static async buy(userId: string, seller_item_id: string) {
+    static async buy(userId: string, items: { id: string, quantity: number }[]) {
         let user = await this.db.query(`select id, sold from User where id = "${userId}"`);
 
         if (!user[0])
@@ -76,22 +76,57 @@ export default class Market {
 
         user = user[0];
 
+        let items_id = items.map(item => item.id);
 
-        let seller_item = await this.db.query(`select Seller.name, Seller.description, Seller.id as seller_id, seller_item.price, seller_item.stock from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.id = "${seller_item_id}"`);
 
-        if (!seller_item[0])
-            throw "seller_item not found";
+        let sellers_items: any[] = await this.db.query(`select Seller.name, Seller.description, Seller.id as seller_id, seller_item.price, seller_item.stock, seller_item.id from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.id in (${items_id.join(", ")})`);
 
-        seller_item = seller_item[0];
+        let total_sold = 0;
 
-        if (seller_item.stock <= 0)
-            throw "Not enought stock";
 
-        await this.db.query(`update seller_item set stock = "${seller_item.stock - 1}" where id = "${seller_item_id}"`);
+        items.forEach(item => {
+            if (items_id.indexOf(item.id) !== items_id.lastIndexOf(item.id))
+                throw "An id was found 2 times";
 
-        await this.pay(userId, seller_item.seller_id, seller_item.price)
-        
-        Delivery.createDelivery(userId, seller_item_id);
+            let seller_item = sellers_items.find((seller_item) => seller_item.id === item.id);
+
+            if (!seller_item)
+                throw "seller_item not found";
+
+            if (seller_item.stock - item.quantity < 0)
+                throw `Item ${item.id} hasn't enough stock`;
+
+            total_sold += seller_item.price * item.quantity;
+        });
+
+        if (total_sold > user.sold)
+            throw "Not enough money";
+
+
+
+
+        for (const item of items) {
+            await buyOne(this.db, item);
+        }
+
+        Delivery.createDelivery();
+
+        async function buyOne(db: mariadb.Pool, item: { id: string, quantity: number}) {
+            
+            let seller_item = sellers_items.find((seller_item) => seller_item.id === item.id);
+
+            if (!seller_item)
+                throw "seller_item not found";
+
+            if (item.quantity < 0)
+                throw "Quantity must be positive";
+
+            await db.query(`update seller_item set stock = "${seller_item.stock - item.quantity}" where id = "${item.id}"`);
+
+            await Market.pay(userId, seller_item.seller_id, seller_item.price * item.quantity)
+
+           
+        }
     }
 }
 
