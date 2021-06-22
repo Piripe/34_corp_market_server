@@ -27,6 +27,19 @@
 }
 ```
 
+### Notification:
+
+```
+{
+    id: id,
+    title: string,
+    content: string,
+    link: string,
+    type: string,
+    received: bool,
+    readed: bool
+}
+```
 
 
 # Endpoints:
@@ -35,7 +48,7 @@
 
 __Renvoie la liste de tous les items__
 
-reponse:
+response:
 
 ```
 Item[]
@@ -48,7 +61,7 @@ __Renvoie l'item en fonction de l'id donné__
 
 id = id of item
 
-reponse:
+response:
 
 ```
 Item
@@ -70,7 +83,7 @@ body:
 }
 ```
 
-reponse (if success):
+response (if success):
 
 ```
 {
@@ -96,7 +109,7 @@ body:
 ]
 ```
 
-reponse (if success):
+response (if success):
 
 ```
 {
@@ -118,7 +131,7 @@ body:
 }
 ```
 
-reponse (if success):
+response (if success):
 
 ```
 {
@@ -161,7 +174,7 @@ body:
 }
 ````
 
-reponse (if success):
+response (if success):
 
 ```
 {
@@ -175,12 +188,60 @@ __Récupère les infos du compte actuel__
 
 Authorization header nécessaire
 
-reponse:
+response:
 
 ```
 {
     username: string,
     id: id,
     sold: floating point number 
+}
+```
+
+
+### GET notifications:
+
+__Récupère les notifications__
+
+Authorization header nécessaire
+
+response:
+
+```
+Notification[]
+```
+
+### GET notifications/new:
+
+__Récupère les nouvelles notifications__
+
+Authorization header nécessaire
+
+response:
+
+```
+Notification[]
+```
+
+
+### POST notifications/read:
+
+__Marque une notification comme lue__
+
+Authorization header nécessaire
+
+body:
+
+```
+{
+    id: id
+}
+```
+
+response (if success):
+
+```
+{
+    success: true
 }
 ```
