@@ -8,6 +8,7 @@ import Market from "./market";
 import Bank from "./Bank";
 import Notifications from "./Notifications";
 import UserHistory from "./user_history";
+import Users from "./users";
 
 const app = express();
 
@@ -163,6 +164,16 @@ app.get(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     Market.getItem(id)
         .then(item => {
             res.json(item);
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
+app.get(/^\/api\/users\/?$/, (req, res) => {
+    Users.getAll()
+        .then(users => {
+            res.json(users);
         })
         .catch(reason => {
             res.json({ error: reason.toString() });
@@ -329,6 +340,7 @@ async function start() {
     Bank.init(db);
     Notifications.init(db);
     UserHistory.init(db);
+    Users.init(db);
     app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 
