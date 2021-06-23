@@ -100,7 +100,7 @@ app.get(/^\/api\/stats\/?$/i, (req, res) => {
         total: total_request_count_from_last_start_up,
         api_total: total_api_request_count_from_last_start_up,
         last_hour: last_hour_request_count.reduce((a, b) => a + b, 0),
-        last_hour_api: last_hour_api_request_count.reduce((a, b) => a + b, 0);
+        last_hour_api: last_hour_api_request_count.reduce((a, b) => a + b, 0)
     });
 });
 
@@ -471,7 +471,7 @@ async function start() {
 }
 
 async function authorize(token: string) {
-    let user = await db.query(`select name, sold, id from User where token = "${token}"`);
+    let user = await db.query(`select name, sold, id, isdeliveryman from User where token = "${token}"`);
     if (user[0]) return user[0];
     throw "Wrong token";
 }
