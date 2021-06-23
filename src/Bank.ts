@@ -1,5 +1,7 @@
 import mariadb from "mariadb";
 import config from "./config";
+import userHistory from "./user_history";
+import { account_event_type } from "./utils";
 
 export default class Bank {
     static db: mariadb.Pool;
@@ -42,6 +44,9 @@ export default class Bank {
 
         await this.modifySold(fromUserId, -amount);
         await this.modifySold(toUserID, await this.calcTaxe(amount));
+
+        userHistory.add(fromUserId, account_event_type.debit, { amout: amount, to: toUserID });
+        userHistory.add(fromUserId, account_event_type.credit, { amout: amount, from: fromUserId });
     }
 
     static async calcTaxe(amount: number) {

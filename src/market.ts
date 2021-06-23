@@ -107,7 +107,7 @@ export default class Market {
             await buyOne(this.db, item);
         }
 
-        userHistory.add(userId, account_event_type.debit, {
+        userHistory.add(userId, account_event_type.purchase, {
             totalSold: total_sold,
             items: items.map(item => {
                 let seller_item = sellers_items.find(seller_item => seller_item.id === item.id);
@@ -120,7 +120,7 @@ export default class Market {
                 };
             }),
         });
-        Delivery.createDelivery();
+        Delivery.createDelivery(userId, items, 0);
 
         async function buyOne(db: mariadb.Pool, item: { id: string; quantity: number }) {
             let seller_item = sellers_items.find(seller_item => seller_item.id === item.id);

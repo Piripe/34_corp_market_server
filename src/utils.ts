@@ -3,5 +3,5 @@ export enum account_event_type {
     "get",
     "credit",
     "debit",
-    "levy",
+    "purchase"
 }

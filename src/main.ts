@@ -9,6 +9,7 @@ import Bank from "./Bank";
 import Notifications from "./Notifications";
 import UserHistory from "./user_history";
 import Users from "./users";
+import Delivery from "./Delivery";
 
 const app = express();
 
@@ -316,6 +317,16 @@ app.get(/^\/api\/history\/?$/i, authorizationMiddleware, (req, res) => {
         });
 });
 
+app.get(/^\/api\/deliveries\/?$/i, authorizationMiddleware, (req, res) => {
+    Delivery.getAll((req as any).data.user.id)
+        .then(deliveries => {
+            res.json(deliveries);
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
 app.use("/api", (req, res) => {
     //404 api
     res.status(404).contentType("text").end("Not found");
@@ -341,6 +352,7 @@ async function start() {
     Notifications.init(db);
     UserHistory.init(db);
     Users.init(db);
+    Delivery.init(db);
     app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 

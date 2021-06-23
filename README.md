@@ -59,7 +59,7 @@ deposit = 0
 get = 1
 credit = 2
 debit = 3
-levy = 4
+purchase = 4
 ```
 
 # Endpoints:
