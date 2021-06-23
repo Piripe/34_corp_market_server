@@ -41,6 +41,26 @@
 }
 ```
 
+### Account_event:
+
+```
+{
+    id: id,
+    data: data,
+    type: account_event_type,
+    data: json in terms of type
+}
+```
+
+### account_event_type:
+
+```
+deposit = 0
+get = 1
+credit = 2
+debit = 3
+levy = 4
+```
 
 # Endpoints:
 
@@ -244,4 +264,16 @@ response (if success):
 {
     success: true
 }
+```
+
+### GET history:
+
+__Récupère l'historique du compte__
+
+Authorization header nécessaire
+
+response:
+
+```
+Account_event[]
 ```
