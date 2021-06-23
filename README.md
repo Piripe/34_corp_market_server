@@ -220,7 +220,8 @@ response:
 {
     username: string,
     id: id,
-    sold: floating point number
+    sold: floating point number,
+    isdeliveryman: bool
 }
 ```
 
