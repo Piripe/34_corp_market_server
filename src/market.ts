@@ -68,6 +68,17 @@ export default class Market {
         await Bank.modifySold(sellerId, await Bank.calcTaxe(amount), "Seller");
     }
 
+    static async getSeller_Item(id: string | string[]): Promise<any[]> {
+
+        let ids = Array.isArray(id) ? id.join(", ") : id;
+
+        return await this.db.query(
+            `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.item_id, seller_item.price, seller_item.stock, seller_item.id 
+            from seller_item inner join Seller on seller_item.seller_id = Seller.id where
+            seller_item.id in (${ids})`
+        );
+    }
+
     static async buy(userId: string, items: { id: string; quantity: number }[]) {
         let user = await this.db.query(`select id, sold from User where id = "${userId}"`);
 
@@ -77,15 +88,15 @@ export default class Market {
 
         let items_id = items.map(item => item.id);
 
-        let sellers_items: any[] = await this.db.query(
-            `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.item_id, seller_item.price, seller_item.stock, seller_item.id 
-            from seller_item inner join Seller on seller_item.seller_id = Seller.id where
-            seller_item.id in (${items_id.join(", ")})`
-        );
+        let sellers_items = await this.getSeller_Item(items_id);
 
         let total_sold = 0;
 
         items.forEach(item => {
+
+            if (!item.quantity)
+                throw "Each element must have a quantity"
+
             item.quantity = parseInt(item.quantity.toString());
 
             if (isNaN(item.quantity)) throw "Quantity is not a number";
@@ -120,7 +131,7 @@ export default class Market {
                 };
             }),
         });
-        Delivery.createDelivery(userId, items, 0);
+        Delivery.createDelivery(userId, items, 0, total_sold);
 
         async function buyOne(db: mariadb.Pool, item: { id: string; quantity: number }) {
             let seller_item = sellers_items.find(seller_item => seller_item.id === item.id);

@@ -13,7 +13,6 @@
 }
 ```
 
-
 ### Seller_Item:
 
 ```
@@ -62,11 +61,22 @@ debit = 3
 purchase = 4
 ```
 
+### Delivery:
+
+```
+{
+    id: id,
+    items: { id: id, quantity: number }[],
+    command_date: date,
+    status: nuber
+}
+```
+
 # Endpoints:
 
 ### GET market/items:
 
-__Renvoie la liste de tous les items__
+**Renvoie la liste de tous les items**
 
 response:
 
@@ -74,10 +84,9 @@ response:
 Item[]
 ```
 
-
 ### GET market/items/id:
 
-__Renvoie l'item en fonction de l'id donné__
+**Renvoie l'item en fonction de l'id donné**
 
 id = id of item
 
@@ -87,10 +96,9 @@ response:
 Item
 ```
 
-
 ### POST market/pay:
 
-__Payer un vendeur__
+**Payer un vendeur**
 
 Authorization header nécessaire
 
@@ -111,10 +119,9 @@ response (if success):
 }
 ```
 
-
 ### POST market/buy:
 
-__Acheter le contenu du panier__
+**Acheter le contenu du panier**
 
 Authorization header nécessaire
 
@@ -139,7 +146,7 @@ response (if success):
 
 ### POST newAccount:
 
-__Créer un compte utilisateur__
+**Créer un compte utilisateur**
 
 body:
 
@@ -161,7 +168,7 @@ response (if success):
 
 ### POST login:
 
-__Récupérer le token de connection avec username + mdp__
+**Récupérer le token de connection avec username + mdp**
 
 body:
 
@@ -180,19 +187,18 @@ response (if success):
 }
 ```
 
-
 ### POST bank/transfer:
 
-__Faire un virement à un joueur__
+**Faire un virement à un joueur**
 
 body:
 
-````
+```
 {
     toUser: id,
     amount: positive number
 }
-````
+```
 
 response (if success):
 
@@ -204,7 +210,7 @@ response (if success):
 
 ### GET users/@me:
 
-__Récupère les infos du compte actuel__
+**Récupère les infos du compte actuel**
 
 Authorization header nécessaire
 
@@ -214,14 +220,13 @@ response:
 {
     username: string,
     id: id,
-    sold: floating point number 
+    sold: floating point number
 }
 ```
 
-
 ### GET notifications:
 
-__Récupère les notifications__
+**Récupère les notifications**
 
 Authorization header nécessaire
 
@@ -233,7 +238,7 @@ Notification[]
 
 ### GET notifications/new:
 
-__Récupère les nouvelles notifications__
+**Récupère les nouvelles notifications**
 
 Authorization header nécessaire
 
@@ -243,10 +248,9 @@ response:
 Notification[]
 ```
 
-
 ### POST notifications/read:
 
-__Marque une notification comme lue__
+**Marque une notification comme lue**
 
 Authorization header nécessaire
 
@@ -268,7 +272,7 @@ response (if success):
 
 ### GET history:
 
-__Récupère l'historique du compte__
+**Récupère l'historique du compte**
 
 Authorization header nécessaire
 
@@ -277,3 +281,28 @@ response:
 ```
 Account_event[]
 ```
+
+### GET deliveries:
+
+**Récupère les livraisons de l'utilisateur**
+
+Authorization header nécessaire
+
+response:
+
+```
+Delivery[]
+```
+
+### GET deliveries/toDelivery:
+
+**Récupère les livraisons à effectuer ( status = 0 ) si l'utilisateur est un livreur**
+
+Authorization header nécessaire
+
+response:
+
+```
+Delivery[]
+```
+

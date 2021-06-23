@@ -9,7 +9,7 @@ export default class Notifications {
 
     static async getAll(userId: string) {
         let notifs = await this.db.query(
-            `select id, title, content, link, type, received, readed from notifications where user_id = "${userId}"`
+            `select id, title, content, link, received, readed from notification where user_id = "${userId}"`
         );
 
         return notifs.map((notif: any) => {
@@ -21,7 +21,7 @@ export default class Notifications {
 
     static async getNew(userId: string) {
         let notifs = await this.db.query(
-            `select id, title, content, link, type, received, readed from notifications where user_id = "${userId}" and received = 0`
+            `select id, title, content, link, received, readed from notification where user_id = "${userId}" and received = 0`
         );
 
         return notifs.map((notif: any) => {
@@ -32,14 +32,14 @@ export default class Notifications {
 
     static async makeAsRead(userId: string, notifId: string) {
         this.makeAsReceived(notifId);
-        await this.db.query(`update notifications set readed = "1" where id = "${notifId}" and user_id = "${userId}"`);
+        await this.db.query(`update notification set readed = "1" where id = "${notifId}" and user_id = "${userId}"`);
     }
 
     private static parse(notif: any) {
         return {
             id: notif.id,
             title: notif.title,
-            content: notif.title,
+            content: notif.content,
             link: notif.link,
             type: notif.type,
             received: Boolean(notif.received),
@@ -48,6 +48,11 @@ export default class Notifications {
     }
 
     private static async makeAsReceived(notifId: string) {
-        await this.db.query(`update notifications set received = "1" where id = "${notifId}"`);
+        await this.db.query(`update notification set received = "1" where id = "${notifId}"`);
+    }
+
+    static async add(title: string, content: string, link: string, user_id: string) {
+
+        await this.db.query(`insert into notification (title, content, link, user_id) values ("${title}", "${content}", "${link}", "${user_id}")`);
     }
 }

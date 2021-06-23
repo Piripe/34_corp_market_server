@@ -1,4 +1,5 @@
 import maridb from "mariadb";
+import Notifications from "./Notifications";
 
 export default class Delivery {
     static db: maridb.Pool;
@@ -7,15 +8,86 @@ export default class Delivery {
         this.db = db;
     }
 
-    static async createDelivery(userId: string, items: { id: string; quantity: number }[], priority: number) {
+    static async createDelivery(
+        userId: string,
+        items: { id: string; quantity: number }[],
+        priority: number,
+        totalSold: number
+    ) {
         await this.db.query(
-            `insert into delivery(client_id, items, priority) values ("${userId}",  '${JSON.stringify(
+            `insert into delivery(client_id, items, priority, total) values ("${userId}",  '${JSON.stringify(
                 items
-            )}', "${priority}")`
+            )}', "${priority}", "${totalSold}")`
         );
     }
 
     static async getAll(userId: string) {
-        return await this.db.query(`select id, items, command_date, status from delivery where client_id = "${userId}"`);
+        return await this.db.query(
+            `select id, items, command_date, status from delivery where client_id = "${userId}"`
+        );
+    }
+
+    static async getForDelivery() {
+        return await this.db.query(`select id, items, command_date, status from delivery where status = "0"`);
+    }
+
+    static async checkIsDeliveryMan(userId: string) {
+        let user = await this.db.query(`select isdeliveryman from user where id = "${userId}"`);
+
+        if (user[0]) return Boolean(user[0].isdeliveryman);
+        throw "User not found";
+    }
+
+    static async getFromId(id: string) {
+        let r = await this.db.query(
+            `select id, client_id, items, command_date, status, priority, deliveryman_id, total from delivery where id = "${id}"`
+        );
+
+        if (!r[0]) throw "Not found";
+
+        return r[0];
+    }
+
+    static async start(deliveryMan_id: string, id: string) {
+        let delivery = await this.getFromId(id);
+
+        if (delivery.status !== 0) throw "Delivery already started";
+
+        if (delivery.deliveryman_id !== null) throw "Delivery already has a deliveryman_id";
+
+        await this.db.query(
+            `update delivery set deliveryman_id = "${deliveryMan_id}", status = "1" where id = "${id}"`
+        );
+
+        Notifications.add(
+            "Livraison en cours",
+            `Votre livraison de de la commande ${id} a ${delivery.total} diamants est en cours`,
+            `/delivery/${id}`,
+            delivery.client_id
+        );
+    }
+
+    static async setReceived(deliveryMan_id: string, id: string) {
+        let delivery = await this.getFromId(id);
+
+        if (delivery.status === 0) throw "Delivery not started yet";
+
+        if (delivery.status === 2) throw "Delivery already received";
+
+        if (delivery.deliveryman_id !== deliveryMan_id) throw "Delivery does not belong to you";
+
+        await this.db.query(`update delivery set status = "2" where id = "${id}"`);
+
+        Notifications.add(
+            "Livraison effectué",
+            `Votre livraison de de la commande ${id} a ${delivery.total} diamants a été effectué`,
+            "/delivery",
+            delivery.client_id
+        );
+    }
+
+    static async cancel(id: string, userId: string) {
+        let r = await this.db.query(`delete from delivery where id = "${id}" and client_id = "${userId}" and status = 0`);
+        return Boolean(r.affectedRows);
     }
 }
