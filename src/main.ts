@@ -531,5 +531,6 @@ function getUserApi(user: any) {
         username: user.name,
         id: user.id,
         sold: user.sold,
+        isdeliveryman: Boolean(user.isdeliveryman)
     };
 }
