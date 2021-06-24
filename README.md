@@ -67,9 +67,13 @@ purchase = 4
 ```
 {
     id: id,
+    client_id: id,
+    deliveryman_id: id,
     items: { id: id, quantity: number }[],
     command_date: date,
-    status: nuber
+    status: nuber,
+    priority: number,
+    total: number
 }
 ```
 
