@@ -376,7 +376,7 @@ app.get(/^\/api\/deliveries\/toDelivery\/?$/i, authorizationMiddleware, async (r
     else res.json({ error: "You are not a delivery man" });
 });
 
-app.get(/^\/api\/deliveries\/inDelivery\/?$/i, authorizationMiddleware, async (req, res) => {
+app.get(/^\/api\/deliveries\/myDelivery\/?$/i, authorizationMiddleware, async (req, res) => {
     if (await Delivery.checkIsDeliveryMan((req as any).data.user.id))
         Delivery.getAllForDeliveryMan((req as any).data.user.id)
             .then(deliveries => {

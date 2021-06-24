@@ -340,7 +340,7 @@ response:
 Delivery[]
 ```
 
-### GET deliveries/inDelivery:
+### GET deliveries/myDelivery:
 
 **Récupère les livraisons à effectuer en temps que livreur**
 
