@@ -342,7 +342,7 @@ Delivery[]
 
 ### GET deliveries/myDelivery:
 
-**Récupère les livraisons à effectuer en temps que livreur**
+**Récupère les livraisons à effectuer et finies en temps que livreur**
 
 Authorization header nécessaire
 
