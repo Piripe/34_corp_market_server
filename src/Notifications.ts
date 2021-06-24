@@ -7,7 +7,7 @@ export default class Notifications {
         this.db = db;
     }
 
-    static async getAll(userId: string) {
+    static async getAll(userId: string): Promise<notification> {
         let notifs = await this.db.query(
             `select id, title, content, link, received, readed from notification where user_id = "${userId}"`
         );
@@ -19,7 +19,7 @@ export default class Notifications {
         });
     }
 
-    static async getNew(userId: string) {
+    static async getNew(userId: string): Promise<notification> {
         let notifs = await this.db.query(
             `select id, title, content, link, received, readed from notification where user_id = "${userId}" and received = 0`
         );
@@ -35,13 +35,12 @@ export default class Notifications {
         await this.db.query(`update notification set readed = "1" where id = "${notifId}" and user_id = "${userId}"`);
     }
 
-    private static parse(notif: any) {
+    private static parse(notif: notification): notification {
         return {
             id: notif.id,
             title: notif.title,
             content: notif.content,
             link: notif.link,
-            type: notif.type,
             received: Boolean(notif.received),
             readed: Boolean(notif.readed),
         };

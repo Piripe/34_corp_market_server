@@ -4,11 +4,12 @@
 
 ```
 {
-    category: category_id,
-    description: string,
     id: id,
     name: string,
+    description: string,
+    category: category_id,
     thumbnail: string / url,
+    full_description: string,
     sellers: Seller_Item[]
 }
 ```
@@ -17,11 +18,12 @@
 
 ```
 {
+    seller_item_id: string,
+    seller_id: string,
+    item_id: string,
     name: string,
     description: string,
-    seller_id: id,
     price: number,
-    seller_item_id: id,
     stock: number
 }
 ```
@@ -34,7 +36,6 @@
     title: string,
     content: string,
     link: string,
-    type: string,
     received: bool,
     readed: bool
 }
@@ -45,7 +46,7 @@
 ```
 {
     id: id,
-    data: data,
+    date: date,
     type: account_event_type,
     data: json in terms of type
 }
@@ -72,7 +73,21 @@ purchase = 4
 }
 ```
 
+### Seller
+
+```
+{
+    id: string,
+    name: string,
+    description: string,
+    sold?: number
+}
+```
+
 # Endpoints:
+
+
+## Market
 
 ### GET market/items:
 
@@ -144,6 +159,8 @@ response (if success):
 }
 ```
 
+## Connexion et gestion des comptes
+
 ### POST newAccount:
 
 **Créer un compte utilisateur**
@@ -187,6 +204,8 @@ response (if success):
 }
 ```
 
+## Bank
+
 ### POST bank/transfer:
 
 **Faire un virement à un joueur**
@@ -208,6 +227,8 @@ response (if success):
 }
 ```
 
+## Users
+
 ### GET users/@me:
 
 **Récupère les infos du compte actuel**
@@ -224,6 +245,8 @@ response:
     isdeliveryman: bool
 }
 ```
+
+## Notifications
 
 ### GET notifications:
 
@@ -271,6 +294,8 @@ response (if success):
 }
 ```
 
+## Historique
+
 ### GET history:
 
 **Récupère l'historique du compte**
@@ -282,6 +307,8 @@ response:
 ```
 Account_event[]
 ```
+
+## Livraisons
 
 ### GET deliveries:
 
@@ -297,9 +324,11 @@ Delivery[]
 
 ### GET deliveries/toDelivery:
 
-**Récupère les livraisons à effectuer ( status = 0 ) si l'utilisateur est un livreur**
+**Récupère les livraisons à effectuer ( status = 0 )**
 
 Authorization header nécessaire
+
+Nécessite d'etre livreur
 
 response:
 
@@ -307,3 +336,108 @@ response:
 Delivery[]
 ```
 
+### GET deliveries/inDelivery:
+
+**Récupère les livraisons à effectuer en temps que livreur**
+
+Authorization header nécessaire
+
+Nécessite d'etre livreur
+
+reponse:
+
+```
+Delivery[]
+```
+
+### POST deliveries/start:
+
+**Marque la livraison comme étant livré par l'utilisateur et la passe en status 1**
+
+Authorization header nécessaire
+
+Nécessite d'etre livreur
+
+body:
+
+```
+{
+    id: id
+}
+```
+
+response:
+
+```
+{
+    success: true
+}
+```
+
+### POST deliveries/setDelivered:
+
+**Marque la livraison comme livrée**
+
+Authorization header nécessaire
+
+Nécessite d'etre livreur et d'avoir cette livraison a effectuer
+
+body:
+
+```
+{
+    id: id
+}
+```
+
+response:
+
+```
+{
+    sucess: true
+}
+```
+
+### DELETE deliveries/id:
+
+**Annule la livraison (status 0 requis)**
+
+Authorization header nécessaire
+
+response:
+
+```
+{
+    success: bool
+}
+```
+
+## Sellers
+
+### GET sellers/@me:
+
+**Récupère les infos de la société où l'user travail**
+
+Authorization header nécessaire
+
+Nécessite de travailler comme vendeur
+
+response:
+
+```
+Seller
+```
+
+### GET sellers/id:
+
+**Récupère les infos de la société en fonction de l'id**
+
+Authorization header nécessaire
+
+Le sold est renseigné si l'utilisateur travail dans l'entreprise demandé
+
+response:
+
+```
+Seller
+```

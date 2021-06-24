@@ -11,21 +11,21 @@ export default class Market {
         this.db = db;
     }
 
-    static async getAllItems() {
+    static async getAllItems(): Promise<ItemWithSellers[]> {
         let items = await this.db.query(
             "select name, id, description, thumbnail, category, full_description from Item"
         );
 
-        let result_items = [];
+        let result_items: ItemWithSellers[] = [];
         for (const item of items) {
             result_items.push(await this.getItem_sellers(item));
         }
         return result_items;
     }
 
-    private static async getItem_sellers(item: any): Promise<any> {
-        return new Promise(async resolve => {
-            let sellers = await this.db.query(
+    private static async getItem_sellers(item: any) {
+        return new Promise<ItemWithSellers>(async resolve => {
+            let sellers: item_seller[] = await this.db.query(
                 `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.price, seller_item.id as seller_item_id, seller_item.stock from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.item_id = "${item.id}"`
             );
             resolve({
@@ -40,7 +40,7 @@ export default class Market {
         });
     }
 
-    static async getItem(id: string) {
+    static async getItem(id: string): Promise<ItemWithSellers> {
         let item = await this.db.query(
             `select name, id, description, thumbnail, category from Item where id = "${id}"`
         );
@@ -68,12 +68,11 @@ export default class Market {
         await Bank.modifySold(sellerId, await Bank.calcTaxe(amount), "Seller");
     }
 
-    static async getSeller_Item(id: string | string[]): Promise<any[]> {
-
+    static async getSeller_Item(id: string | string[]): Promise<item_seller[]> {
         let ids = Array.isArray(id) ? id.join(", ") : id;
 
         return await this.db.query(
-            `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.item_id, seller_item.price, seller_item.stock, seller_item.id 
+            `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.item_id, seller_item.price, seller_item.stock, seller_item.id as seller_item_id
             from seller_item inner join Seller on seller_item.seller_id = Seller.id where
             seller_item.id in (${ids})`
         );
@@ -93,9 +92,7 @@ export default class Market {
         let total_sold = 0;
 
         items.forEach(item => {
-
-            if (!item.quantity)
-                throw "Each element must have a quantity"
+            if (!item.quantity) throw "Each element must have a quantity";
 
             item.quantity = parseInt(item.quantity.toString());
 
@@ -103,7 +100,7 @@ export default class Market {
 
             if (items_id.indexOf(item.id) !== items_id.lastIndexOf(item.id)) throw "An id was found 2 times";
 
-            let seller_item = sellers_items.find(seller_item => seller_item.id === item.id);
+            let seller_item = sellers_items.find(seller_item => seller_item.seller_item_id === item.id);
 
             if (!seller_item) throw "seller_item not found";
 
@@ -118,10 +115,15 @@ export default class Market {
             await buyOne(this.db, item);
         }
 
+        Delivery.createDelivery(userId, items, 0, total_sold);
+
+
         userHistory.add(userId, account_event_type.purchase, {
             totalSold: total_sold,
             items: items.map(item => {
-                let seller_item = sellers_items.find(seller_item => seller_item.id === item.id);
+                let seller_item = sellers_items.find(seller_item => seller_item.seller_item_id === item.id);
+
+                if (!seller_item) throw "Internal server error";
 
                 return {
                     quantity: item.quantity,
@@ -131,10 +133,9 @@ export default class Market {
                 };
             }),
         });
-        Delivery.createDelivery(userId, items, 0, total_sold);
 
         async function buyOne(db: mariadb.Pool, item: { id: string; quantity: number }) {
-            let seller_item = sellers_items.find(seller_item => seller_item.id === item.id);
+            let seller_item = sellers_items.find(seller_item => seller_item.seller_item_id === item.id);
 
             if (!seller_item) throw "seller_item not found";
 

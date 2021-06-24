@@ -10,6 +10,7 @@ import Notifications from "./Notifications";
 import UserHistory from "./user_history";
 import Users from "./users";
 import Delivery from "./Delivery";
+import Sellers from "./sellers";
 
 const app = express();
 
@@ -100,7 +101,7 @@ app.get(/^\/api\/stats\/?$/i, (req, res) => {
         total: total_request_count_from_last_start_up,
         api_total: total_api_request_count_from_last_start_up,
         last_hour: last_hour_request_count.reduce((a, b) => a + b, 0),
-        last_hour_api: last_hour_api_request_count.reduce((a, b) => a + b, 0)
+        last_hour_api: last_hour_api_request_count.reduce((a, b) => a + b, 0),
     });
 });
 
@@ -375,6 +376,18 @@ app.get(/^\/api\/deliveries\/toDelivery\/?$/i, authorizationMiddleware, async (r
     else res.json({ error: "You are not a delivery man" });
 });
 
+app.get(/^\/api\/deliveries\/inDelivery\/?$/i, authorizationMiddleware, async (req, res) => {
+    if (await Delivery.checkIsDeliveryMan((req as any).data.user.id))
+        Delivery.getAllForDeliveryMan((req as any).data.user.id)
+            .then(deliveries => {
+                res.json(deliveries);
+            })
+            .catch(reason => {
+                res.json({ error: reason.toString() });
+            });
+    else res.json({ error: "You are not a delivery man" });
+});
+
 app.post(/^\/api\/deliveries\/start\/?$/i, authorizationMiddleware, async (req, res) => {
     if (!req.body) {
         res.json({ error: "No body" });
@@ -441,6 +454,35 @@ app.delete(/^\/api\/deliveries\/([a-z0-9_]+)\/?$/i, authorizationMiddleware, (re
         });
 });
 
+app.get(/^\/api\/sellers\/@me\/?$/i, authorizationMiddleware, (req, res) => {
+    Sellers.getFromId((req as any).data.user.workin)
+        .then(seller => {
+            res.json(seller);
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
+app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, authorizationMiddleware, async (req, res) => {
+    let match = req.url.match(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i);
+
+    if (!match || !match[1]) {
+        res.json({ error: "No id found" });
+        return;
+    }
+
+    try {
+        let seller = await Sellers.getFromId(match[1]);
+
+        if (match[1] != (req as any).data.user.workin) seller = Sellers.parseDataForNoPrivateAccess(seller);
+
+        res.json(seller);
+    } catch (e) {
+        res.json({ error: e.toString() });
+    }
+});
+
 app.use("/api", (req, res) => {
     //404 api
     res.status(404).contentType("text").end("Not found");
@@ -467,11 +509,12 @@ async function start() {
     UserHistory.init(db);
     Users.init(db);
     Delivery.init(db);
+    Sellers.init(db);
     app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 
 async function authorize(token: string) {
-    let user = await db.query(`select name, sold, id, isdeliveryman from User where token = "${token}"`);
+    let user = await db.query(`select name, sold, id, isdeliveryman, workin from User where token = "${token}"`);
     if (user[0]) return user[0];
     throw "Wrong token";
 }
@@ -531,6 +574,7 @@ function getUserApi(user: any) {
         username: user.name,
         id: user.id,
         sold: user.sold,
-        isdeliveryman: Boolean(user.isdeliveryman)
+        isdeliveryman: Boolean(user.isdeliveryman),
+        workin: user.workin,
     };
 }

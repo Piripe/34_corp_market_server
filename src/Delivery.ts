@@ -21,14 +21,22 @@ export default class Delivery {
         );
     }
 
-    static async getAll(userId: string) {
+    static async getAll(userId: string): Promise<delivery[]> {
         return await this.db.query(
-            `select id, items, command_date, status from delivery where client_id = "${userId}"`
+            `select id, client_id, items, command_date, status, priority, deliveryman_id, total from delivery where client_id = "${userId}"`
         );
     }
 
-    static async getForDelivery() {
-        return await this.db.query(`select id, items, command_date, status from delivery where status = "0"`);
+    static async getForDelivery(): Promise<delivery[]> {
+        return await this.db.query(
+            `select id, client_id, items, command_date, status, priority, deliveryman_id, total from delivery where status = "0"`
+        );
+    }
+
+    static async getAllForDeliveryMan(deliveryman_id: string): Promise<delivery[]> {
+        return await this.db.query(
+            `select id, client_id, items, command_date, status, priority, deliveryman_id, total from delivery where deliveryman_id = "${deliveryman_id}"`
+        );
     }
 
     static async checkIsDeliveryMan(userId: string) {
@@ -38,7 +46,7 @@ export default class Delivery {
         throw "User not found";
     }
 
-    static async getFromId(id: string) {
+    static async getFromId(id: string): Promise<delivery> {
         let r = await this.db.query(
             `select id, client_id, items, command_date, status, priority, deliveryman_id, total from delivery where id = "${id}"`
         );
@@ -70,9 +78,11 @@ export default class Delivery {
     static async setReceived(deliveryMan_id: string, id: string) {
         let delivery = await this.getFromId(id);
 
-        if (delivery.status === 0) throw "Delivery not started yet";
-
-        if (delivery.status === 2) throw "Delivery already received";
+        if (delivery.status !== 1) {
+            if (delivery.status === 0) throw "Delivery not started yet";
+            if (delivery.status === 2) throw "Delivery already received";
+            throw "Unkown delivery status";
+        }
 
         if (delivery.deliveryman_id !== deliveryMan_id) throw "Delivery does not belong to you";
 
@@ -87,7 +97,9 @@ export default class Delivery {
     }
 
     static async cancel(id: string, userId: string) {
-        let r = await this.db.query(`delete from delivery where id = "${id}" and client_id = "${userId}" and status = 0`);
+        let r = await this.db.query(
+            `delete from delivery where id = "${id}" and client_id = "${userId}" and status = 0`
+        );
         return Boolean(r.affectedRows);
     }
 }
