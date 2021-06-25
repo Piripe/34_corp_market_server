@@ -4,7 +4,6 @@ interface Item {
     description: string;
     thumbnail: string;
     category: string;
-    full_description: string;
 }
 
 interface ItemWithSellers {
@@ -13,7 +12,6 @@ interface ItemWithSellers {
     description: string;
     thumbnail: string;
     category: string;
-    full_description: string;
     sellers: item_seller[];
 }
 
@@ -23,6 +21,7 @@ interface item_seller {
     item_id: string;
     name: string;
     description: string;
+    full_description: string;
     price: number;
     stock: number;
 }
@@ -42,9 +41,14 @@ interface Seller {
     id: string;
     name: string;
     description: string;
-    sold?: number;
+    sold: number;
 }
 
+interface SellerNoSold {
+    id: string;
+    name: string;
+    description: string;
+}
 
 interface notification {
     id: string;

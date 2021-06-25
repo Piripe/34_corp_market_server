@@ -13,7 +13,7 @@ export default class Market {
 
     static async getAllItems(): Promise<ItemWithSellers[]> {
         let items = await this.db.query(
-            "select name, id, description, thumbnail, category, full_description from Item"
+            "select name, id, description, thumbnail, category from Item"
         );
 
         let result_items: ItemWithSellers[] = [];
@@ -26,7 +26,7 @@ export default class Market {
     private static async getItem_sellers(item: any) {
         return new Promise<ItemWithSellers>(async resolve => {
             let sellers: item_seller[] = await this.db.query(
-                `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.price, seller_item.id as seller_item_id, seller_item.stock from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.item_id = "${item.id}"`
+                `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.full_description, seller_item.price, seller_item.id as seller_item_id, seller_item.stock from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.item_id = "${item.id}"`
             );
             resolve({
                 category: item.category,
@@ -35,7 +35,6 @@ export default class Market {
                 name: item.name,
                 thumbnail: item.thumbnail,
                 sellers: sellers,
-                full_description: item.full_description,
             });
         });
     }
@@ -116,7 +115,6 @@ export default class Market {
         }
 
         Delivery.createDelivery(userId, items, 0, total_sold);
-
 
         userHistory.add(userId, account_event_type.purchase, {
             totalSold: total_sold,

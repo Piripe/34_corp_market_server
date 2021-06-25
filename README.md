@@ -9,7 +9,6 @@
     description: string,
     category: category_id,
     thumbnail: string / url,
-    full_description: string,
     sellers: Seller_Item[]
 }
 ```
@@ -23,6 +22,7 @@
     item_id: string,
     name: string,
     description: string,
+    full_description: string,
     price: number,
     stock: number
 }
@@ -77,14 +77,24 @@ purchase = 4
 }
 ```
 
-### Seller
+### Seller:
 
 ```
 {
     id: string,
     name: string,
     description: string,
-    sold?: number
+    sold: number
+}
+```
+
+### SellerNoSold:
+
+```
+{
+    id: string,
+    name: string,
+    description: string
 }
 ```
 
@@ -418,6 +428,17 @@ response:
 
 ## Sellers
 
+### GET sellers:
+
+**Récupère les infos de tous les vendeurs**
+
+response:
+
+```
+SellerNoSold[]
+```
+
+
 ### GET sellers/@me:
 
 **Récupère les infos de la société où l'user travail**
@@ -443,5 +464,5 @@ Le sold est renseigné si l'utilisateur travail dans l'entreprise demandé
 response:
 
 ```
-Seller
+SellerNoSold
 ```

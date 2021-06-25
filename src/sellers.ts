@@ -9,13 +9,17 @@ export default class Sellers {
 
     static async getFromId(id: string): Promise<Seller> {
         let seller = await this.db.query(`select id, name, description, sold from seller where id = "${id}"`);
-
+        
         if (seller[0]) return seller[0];
 
         throw "Seller not found";
     }
 
-    static parseDataForNoPrivateAccess(seller: Seller): Seller {
+    static async getAll(): Promise<SellerNoSold[]> {
+        return await this.db.query("select id, description, name from seller");
+    }
+
+    static parseDataForNoPrivateAccess(seller: Seller): SellerNoSold {
         return {
             description: seller.description,
             id: seller.id,

@@ -464,7 +464,17 @@ app.get(/^\/api\/sellers\/@me\/?$/i, authorizationMiddleware, (req, res) => {
         });
 });
 
-app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, authorizationMiddleware, async (req, res) => {
+app.get(/^\/api\/sellers\/?$/i, (req, res) => {
+    Sellers.getAll()
+        .then(sellers => {
+            res.json(sellers);
+        })
+        .catch(reason => {
+            res.json({ reason: reason.toString() });
+        });
+});
+
+app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     let match = req.url.match(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i);
 
     if (!match || !match[1]) {
@@ -473,11 +483,7 @@ app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, authorizationMiddleware, async (re
     }
 
     try {
-        let seller = await Sellers.getFromId(match[1]);
-
-        if (match[1] != (req as any).data.user.workin) seller = Sellers.parseDataForNoPrivateAccess(seller);
-
-        res.json(seller);
+        res.json(Sellers.parseDataForNoPrivateAccess(await Sellers.getFromId(match[1])));
     } catch (e) {
         res.json({ error: e.toString() });
     }
