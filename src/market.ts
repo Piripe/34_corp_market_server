@@ -227,6 +227,32 @@ export default class Market {
         );
 
         return Boolean(r.affectedRows);
+    }
 
+    static async deleteSellerItem(seller_item_id: string, seller_id: string) {
+        let seller_item = await this.db.query(
+            `select id, seller_id, item_id from seller_item where id = "${seller_item_id}"`
+        );
+
+        if (!seller_item[0]) throw "Item does not exist";
+
+        seller_item = seller_item[0];
+
+        if (seller_item.seller_id != seller_id) throw "You are not authorized to delete this";
+
+        let r = await this.db.query(
+            `delete from seller_item where id = "${seller_item_id}" and seller_id = "${seller_id}"`
+        );
+
+        (async () => {
+            let sellers_items: any[] = await this.db.query(`select id from seller_item where item_id = "${seller_item.item_id}"`);
+
+            if (sellers_items.length === 0)
+                await this.db.query(`delete from item where id = "${seller_item.item_id}"`);
+        })();
+
+        return Boolean(
+            r.affectedRows
+        );
     }
 }

@@ -359,6 +359,23 @@ app.patch(/^\/api\/market\/items\/price\/?$/i, authorizationMiddleware, (req, re
         });
 });
 
+app.delete(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i, authorizationMiddleware, (req, res) => {
+    let match = req.url.match(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i);
+
+    if (!match || !match[1]) {
+        res.json({ error: "No id found" });
+        return;
+    }
+
+    Market.deleteSellerItem(match[1], (req as any).data.user.workin)
+        .then(success => {
+            res.json({ success: success });
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
 app.get(/^\/api\/users\/?$/, (req, res) => {
     Users.getAll()
         .then(users => {

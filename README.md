@@ -284,6 +284,20 @@ body:
 }
 ```
 
+### DELETE market/items/id:
+
+**Supprime la vente en fonction de l'id donnée**
+
+Supprime aussi l'item si plus de vente associés
+
+response (if success):
+
+```
+{
+    success: true
+}
+```
+
 ## Bank
 
 ### POST bank/transfer:
