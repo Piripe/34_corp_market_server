@@ -114,6 +114,50 @@ purchase = 4
 
 # Endpoints:
 
+## Connexion et gestion des comptes
+
+### POST newAccount:
+
+**Créer un compte utilisateur**
+
+body:
+
+```
+{
+    username: string (must be a minecraft username),
+    password: string,
+    pikachu: pikachu
+}
+```
+
+response (if success):
+
+```
+{
+    success: true
+}
+```
+
+### POST login:
+
+**Récupérer le token de connection avec username + mdp**
+
+body:
+
+```
+{
+    username: string,
+    password: string
+}
+```
+
+response (if success):
+
+```
+{
+    token: string
+}
+```
 
 ## Market
 
@@ -210,49 +254,33 @@ reponse:
 }
 ```
 
+### PATCH market/items/stock:
 
-## Connexion et gestion des comptes
+**Modifie le stock de la vente**
 
-### POST newAccount:
-
-**Créer un compte utilisateur**
-
-body:
-
-```
-{
-    username: string (must be a minecraft username),
-    password: string,
-    pikachu: pikachu
-}
-```
-
-response (if success):
-
-```
-{
-    success: true
-}
-```
-
-### POST login:
-
-**Récupérer le token de connection avec username + mdp**
+Authorization header nécessaire
 
 body:
 
 ```
 {
-    username: string,
-    password: string
+    id: seller_item_id,
+    stock: number
 }
 ```
 
-response (if success):
+### PATCH market/items/price:
+
+**Modifie le prix de la vente**
+
+Authorization header nécessaire
+
+body:
 
 ```
 {
-    token: string
+    id: seller_item_id,
+    price: number
 }
 ```
 
@@ -475,7 +503,6 @@ response:
 ```
 SellerNoSold[]
 ```
-
 
 ### GET sellers/@me:
 

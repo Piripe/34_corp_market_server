@@ -309,6 +309,56 @@ app.post(/^\/api\/market\/items\/new\/?$/i, authorizationMiddleware, (req, res) 
         });
 });
 
+app.patch(/^\/api\/market\/items\/stock\/?$/i, authorizationMiddleware, (req, res) => {
+    if (!req.body) {
+        res.json({ error: "No body" });
+        return;
+    }
+
+    if (!req.body.stock) {
+        res.json({ error: "stock is required in the body" });
+        return;
+    }
+
+    if (!req.body.id) {
+        res.json({ error: "id is required in the body" });
+        return;
+    }
+
+    Market.editSellerItemStock(req.body.id, (req as any).data.user.workin, req.body.stock)
+        .then(success => {
+            res.json({ success: success });
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
+app.patch(/^\/api\/market\/items\/price\/?$/i, authorizationMiddleware, (req, res) => {
+    if (!req.body) {
+        res.json({ error: "No body" });
+        return;
+    }
+
+    if (!req.body.price) {
+        res.json({ error: "price is required in the body" });
+        return;
+    }
+
+    if (!req.body.id) {
+        res.json({ error: "id is required in the body" });
+        return;
+    }
+
+    Market.editSellerItemPrice(req.body.id, (req as any).data.user.workin, req.body.price)
+        .then(success => {
+            res.json({ success: success });
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
 app.get(/^\/api\/users\/?$/, (req, res) => {
     Users.getAll()
         .then(users => {

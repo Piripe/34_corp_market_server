@@ -204,4 +204,29 @@ export default class Market {
             `insert into seller_item (item_id, seller_id, stock, price, full_description) values ("${item_id}", "${seller_id}", "${stock}", "${price}", "${full_description}")`
         );
     }
+
+    static async editSellerItemStock(seller_item_id: string, seller_id: string, newStock: number) {
+        newStock = parseInt(newStock.toString());
+
+        if (isNaN(newStock)) throw "stock must be a number";
+
+        let r = await this.db.query(
+            `update seller_item set stock = ${newStock} where id = "${seller_item_id}" and seller_id = "${seller_id}"`
+        );
+
+        return Boolean(r.affectedRows);
+    }
+
+    static async editSellerItemPrice(seller_item_id: string, seller_id: string, newPrice: number) {
+        newPrice = parseFloat(newPrice.toString());
+
+        if (isNaN(newPrice)) throw "sold must be a number";
+
+        let r = await this.db.query(
+            `update seller_item set price = ${newPrice} where id = "${seller_item_id}" and seller_id = "${seller_id}"`
+        );
+
+        return Boolean(r.affectedRows);
+
+    }
 }
