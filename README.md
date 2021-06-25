@@ -98,6 +98,20 @@ purchase = 4
 }
 ```
 
+### ItemCreationOptions:
+
+```
+{
+    name: string,
+    description: string,
+    full_description: string,
+    thumbnail: string,
+    category: string,
+    price: number,
+    stock: number
+}
+```
+
 # Endpoints:
 
 
@@ -172,6 +186,30 @@ response (if success):
     success: true
 }
 ```
+
+### POST market/items/new:
+
+**Ajouter un nouvel item/vente**
+
+Authorization header nécessaire
+
+Nécessite de travailler dans une entreprise
+
+body:
+
+```
+ItemCreationOptions
+```
+
+reponse:
+
+```
+{
+    success: true,
+    warn?: boolean
+}
+```
+
 
 ## Connexion et gestion des comptes
 

@@ -59,8 +59,7 @@ const authorizationMiddleware = async (req: any, res: any, next: any) => {
 
     authorize(token)
         .then(user => {
-            req.data = {};
-            req.data.user = user;
+            req.data = { user: user };
             next();
         })
         .catch(reason => {
@@ -186,7 +185,6 @@ app.get(/^\/api\/market\/items\/?$/i, async (req, res) => {
 });
 
 app.get(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i, async (req, res) => {
-    // @ts-ignore
     let match = req.url.match(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i);
     if (match) {
         var id = match[1];
@@ -202,6 +200,109 @@ app.get(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     Market.getItem(id)
         .then(item => {
             res.json(item);
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
+app.post(/^\/api\/market\/pay\/?$/i, authorizationMiddleware, (req, res) => {
+    if (!req.body) {
+        res.json({ error: "No body" });
+        return;
+    }
+
+    if (!req.body.sellerId) {
+        res.json({ error: "sellerId is required in the body" });
+        return;
+    }
+
+    if (!req.body.amount) {
+        res.json({ error: "amount is required in the body" });
+        return;
+    }
+
+    if (!(req as any).data.user.id) {
+        res.status(500).end("Fatal server error");
+    }
+
+    Market.pay((req as any).data.user.id, req.body.sellerId, req.body.amount)
+        .then(() => {
+            res.json({ success: true });
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
+app.post(/^\/api\/market\/buy\/?$/i, authorizationMiddleware, (req, res) => {
+    if (!req.body) {
+        res.json({ error: "No body" });
+        return;
+    }
+
+    if (!Array.isArray(req.body)) {
+        res.json({ error: "Body must be an array" });
+        return;
+    }
+
+    Market.buy((req as any).data.user.id, req.body)
+        .then(() => {
+            res.json({ success: true });
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
+app.post(/^\/api\/market\/items\/new\/?$/i, authorizationMiddleware, (req, res) => {
+    if (!req.body) {
+        res.json({ error: "No body" });
+        return;
+    }
+
+    if (!req.body.name) {
+        res.json({ error: "name is required in the body" });
+        return;
+    }
+
+    if (!req.body.category) {
+        res.json({ error: "category is required in the body" });
+        return;
+    }
+
+    if (!req.body.description) {
+        res.json({ error: "description is required in the body" });
+        return;
+    }
+
+    if (!req.body.full_description) {
+        res.json({ error: "full_description is required in the body" });
+        return;
+    }
+
+    if (!req.body.price) {
+        res.json({ error: "price is required in the body" });
+        return;
+    }
+
+    if (!req.body.stock) {
+        res.json({ error: "stock is required in the body" });
+        return;
+    }
+
+    if (!req.body.thumbnail) {
+        res.json({ error: "thumbnail is required in the body" });
+        return;
+    }
+
+    if (!(req as any).data.user.id) {
+        res.status(500).end("Fatal server error");
+    }
+
+    Market.newItem((req as any).data.user.workin, req.body)
+        .then(result => {
+            res.json(result);
         })
         .catch(reason => {
             res.json({ error: reason.toString() });
@@ -247,55 +348,6 @@ app.post(/^\/api\/bank\/transfer\/?$/i, authorizationMiddleware, (req, res) => {
     }
 
     Bank.transfertSold((req as any).data.user.id, req.body.toUser, req.body.amount)
-        .then(() => {
-            res.json({ success: true });
-        })
-        .catch(reason => {
-            res.json({ error: reason.toString() });
-        });
-});
-
-app.post(/^\/api\/market\/pay\/?$/i, authorizationMiddleware, (req, res) => {
-    if (!req.body) {
-        res.json({ error: "No body" });
-        return;
-    }
-
-    if (!req.body.sellerId) {
-        res.json({ error: "sellerId is required in the body" });
-        return;
-    }
-
-    if (!req.body.amount) {
-        res.json({ error: "amount is required in the body" });
-        return;
-    }
-
-    if (!(req as any).data.user.id) {
-        res.status(500).end("Internal server error");
-    }
-
-    Market.pay((req as any).data.user.id, req.body.sellerId, req.body.amount)
-        .then(() => {
-            res.json({ success: true });
-        })
-        .catch(reason => {
-            res.json({ error: reason.toString() });
-        });
-});
-
-app.post(/^\/api\/market\/buy\/?$/i, authorizationMiddleware, (req, res) => {
-    if (!req.body) {
-        res.json({ error: "No body" });
-        return;
-    }
-
-    if (!Array.isArray(req.body)) {
-        res.json({ error: "Body must be an array" });
-        return;
-    }
-
-    Market.buy((req as any).data.user.id, req.body)
         .then(() => {
             res.json({ success: true });
         })
@@ -519,7 +571,7 @@ async function start() {
     app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 
-async function authorize(token: string) {
+async function authorize(token: string): Promise<User> {
     let user = await db.query(`select name, sold, id, isdeliveryman, workin from User where token = "${token}"`);
     if (user[0]) return user[0];
     throw "Wrong token";

@@ -15,6 +15,16 @@ interface ItemWithSellers {
     sellers: item_seller[];
 }
 
+interface ItemCreationOptions {
+    name: string;
+    description: string;
+    full_description: string;
+    thumbnail: string;
+    category: string;
+    price: number;
+    stock: number;
+}
+
 interface item_seller {
     seller_item_id: string;
     seller_id: string;
@@ -57,4 +67,12 @@ interface notification {
     link: string;
     received: boolean;
     readed: boolean;
+}
+
+interface User {
+    username: string;
+    id: string;
+    sold: number;
+    isdeliveryman: boolean;
+    workin?: string;
 }

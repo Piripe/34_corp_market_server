@@ -1,6 +1,7 @@
 import mariadb from "mariadb";
 import Bank from "./Bank";
 import Delivery from "./Delivery";
+import Sellers from "./sellers";
 import userHistory from "./user_history";
 import { account_event_type } from "./utils";
 
@@ -12,9 +13,7 @@ export default class Market {
     }
 
     static async getAllItems(): Promise<ItemWithSellers[]> {
-        let items = await this.db.query(
-            "select name, id, description, thumbnail, category from Item"
-        );
+        let items = await this.db.query("select name, id, description, thumbnail, category from Item");
 
         let result_items: ItemWithSellers[] = [];
         for (const item of items) {
@@ -121,7 +120,7 @@ export default class Market {
             items: items.map(item => {
                 let seller_item = sellers_items.find(seller_item => seller_item.seller_item_id === item.id);
 
-                if (!seller_item) throw "Internal server error";
+                if (!seller_item) throw "Fatal server error";
 
                 return {
                     quantity: item.quantity,
@@ -145,5 +144,64 @@ export default class Market {
 
             await Market.pay(userId, seller_item.seller_id, seller_item.price * item.quantity);
         }
+    }
+
+    static async newItem(sellerId: string | null, options: ItemCreationOptions) {
+        let returnObject: any = {};
+
+        if (!sellerId) throw "You must work";
+
+        let item = await this.db.query(`select id from item where name = "${options.name}"`);
+
+        let itemExist: number | null = null;
+        let itemId: number | null = null;
+        if (item[0]) {
+            itemExist = item[0].id;
+            itemId = item[0].id;
+            returnObject.warn =
+                "Item already exist: it was not recreate so your description, category and thumbnail have not been taken into account";
+        } else itemId = await this.createItem(options);
+
+        if (!itemId) throw "Fatal server error";
+
+        await this.createSeller_Item(
+            itemId.toString(),
+            sellerId,
+            options.stock,
+            options.price,
+            options.full_description
+        );
+
+        returnObject.success = true;
+        return returnObject;
+    }
+
+    private static async createItem(options: ItemCreationOptions): Promise<number> {
+        await this.db.query(
+            `insert into item (name, description, category, thumbnail) values ("${options.name}", "${options.description}", "${options.category}", "${options.thumbnail}")`
+        );
+        let id = await this.db.query(`SELECT id from item where name = "${options.name}"`);
+        if (id[0]) return id[0].id;
+        throw "Fatal server error";
+    }
+
+    private static async createSeller_Item(
+        item_id: string,
+        seller_id: string,
+        stock: number,
+        price: number,
+        full_description: string
+    ) {
+        let isExist = (
+            await this.db.query(
+                `select id from seller_item where item_id = "${item_id}" and seller_id = "${seller_id}" limit 1`
+            )
+        )[0];
+
+        if (isExist) throw "You already sell this item";
+
+        await this.db.query(
+            `insert into seller_item (item_id, seller_id, stock, price, full_description) values ("${item_id}", "${seller_id}", "${stock}", "${price}", "${full_description}")`
+        );
     }
 }

@@ -9,7 +9,7 @@ export default class Sellers {
 
     static async getFromId(id: string): Promise<Seller> {
         let seller = await this.db.query(`select id, name, description, sold from seller where id = "${id}"`);
-        
+
         if (seller[0]) return seller[0];
 
         throw "Seller not found";
