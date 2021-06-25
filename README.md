@@ -284,6 +284,21 @@ body:
 }
 ```
 
+### PATCH market/items/full_description:
+
+**Modifie la full description de la vente**
+
+Authorization header nécessaire
+
+body:
+
+```
+{
+    id: seller_item_id,
+    full_description: string
+}
+```
+
 ### DELETE market/items/id:
 
 **Supprime la vente en fonction de l'id donnée**

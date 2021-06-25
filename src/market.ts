@@ -229,6 +229,14 @@ export default class Market {
         return Boolean(r.affectedRows);
     }
 
+    static async editSellerItemFullDescriptio(seller_item_id: string, seller_id: string, fullDescription: number) {
+        let r = await this.db.query(
+            `update seller_item set full_description = ${fullDescription} where id = "${seller_item_id}" and seller_id = "${seller_id}"`
+        );
+
+        return Boolean(r.affectedRows);
+    }
+
     static async deleteSellerItem(seller_item_id: string, seller_id: string) {
         let seller_item = await this.db.query(
             `select id, seller_id, item_id from seller_item where id = "${seller_item_id}"`

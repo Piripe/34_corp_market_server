@@ -359,6 +359,31 @@ app.patch(/^\/api\/market\/items\/price\/?$/i, authorizationMiddleware, (req, re
         });
 });
 
+app.patch(/^\/api\/market\/items\/full_description\/?$/i, authorizationMiddleware, (req, res) => {
+    if (!req.body) {
+        res.json({ error: "No body" });
+        return;
+    }
+
+    if (!req.body.full_description) {
+        res.json({ error: "full_description is required in the body" });
+        return;
+    }
+
+    if (!req.body.id) {
+        res.json({ error: "id is required in the body" });
+        return;
+    }
+
+    Market.editSellerItemPrice(req.body.id, (req as any).data.user.workin, req.body.full_description)
+        .then(success => {
+            res.json({ success: success });
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
 app.delete(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i, authorizationMiddleware, (req, res) => {
     let match = req.url.match(/^\/api\/market\/items\/([a-z0-9_]+)\/?$/i);
 
