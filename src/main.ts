@@ -634,12 +634,8 @@ app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     }
 });
 
-app.use("/api", (req, res) => {
-    //404 api
-    res.status(404).contentType("text").end("Not found");
-});
 
-app.get("/search", (req, res) => {
+app.get(/^\/api\/search\/?(\S*)/i, (req, res) => {
     Search.search((req.params as any).q ?? "")
         .then(result => {
             res.json(result);
@@ -648,6 +644,14 @@ app.get("/search", (req, res) => {
             res.json({ error: reason.toString() });
         });
 });
+
+
+app.use("/api", (req, res) => {
+    //404 api
+    res.status(404).contentType("text").end("Not found");
+});
+
+
 
 // End api
 
