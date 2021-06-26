@@ -3,7 +3,6 @@ interface Item {
     id: string;
     description: string;
     thumbnail: string;
-    category: string;
 }
 
 interface ItemWithSellers {
@@ -11,7 +10,6 @@ interface ItemWithSellers {
     name: string;
     description: string;
     thumbnail: string;
-    category: string;
     sellers: item_seller[];
 }
 
@@ -20,7 +18,6 @@ interface ItemCreationOptions {
     description: string;
     full_description: string;
     thumbnail: string;
-    category: string;
     price: number;
     stock: number;
     stack: number;

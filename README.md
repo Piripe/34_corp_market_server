@@ -7,7 +7,6 @@
     id: id,
     name: string,
     description: string,
-    category: category_id,
     thumbnail: string / url,
     sellers: Seller_Item[]
 }
@@ -106,7 +105,6 @@ purchase = 4
     description: string,
     full_description: string,
     thumbnail: string,
-    category: string,
     price: number,
     stock: number,
     stack: number
@@ -560,4 +558,14 @@ response:
 
 ```
 SellerNoSold
+```
+
+## Search
+
+### GET search/q=query:
+
+response:
+
+```
+id[]
 ```

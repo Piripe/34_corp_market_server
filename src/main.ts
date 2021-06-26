@@ -11,6 +11,7 @@ import UserHistory from "./user_history";
 import Users from "./users";
 import Delivery from "./Delivery";
 import Sellers from "./sellers";
+import Search from "./search";
 
 const app = express();
 
@@ -263,11 +264,6 @@ app.post(/^\/api\/market\/items\/new\/?$/i, authorizationMiddleware, (req, res) 
 
     if (!req.body.name) {
         res.json({ error: "name is required in the body" });
-        return;
-    }
-
-    if (!req.body.category) {
-        res.json({ error: "category is required in the body" });
         return;
     }
 
@@ -643,6 +639,16 @@ app.use("/api", (req, res) => {
     res.status(404).contentType("text").end("Not found");
 });
 
+app.get("/search", (req, res) => {
+    Search.search((req.params as any).q ?? "")
+        .then(result => {
+            res.json(result);
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
 // End api
 
 app.use(express.static(config.public, { extensions: ["html"], index: "index.html" }));
@@ -665,6 +671,7 @@ async function start() {
     Users.init(db);
     Delivery.init(db);
     Sellers.init(db);
+    Search.init(db);
     app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 

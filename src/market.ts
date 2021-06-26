@@ -13,7 +13,7 @@ export default class Market {
     }
 
     static async getAllItems(): Promise<ItemWithSellers[]> {
-        let items = await this.db.query("select name, id, description, thumbnail, category from Item");
+        let items = await this.db.query("select name, id, description, thumbnail from Item");
 
         let result_items: ItemWithSellers[] = [];
         for (const item of items) {
@@ -28,7 +28,6 @@ export default class Market {
                 `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.full_description, seller_item.price, seller_item.id as seller_item_id, seller_item.stock from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.item_id = "${item.id}"`
             );
             resolve({
-                category: item.category,
                 description: item.description,
                 id: item.id,
                 name: item.name,
@@ -40,7 +39,7 @@ export default class Market {
 
     static async getItem(id: string): Promise<ItemWithSellers> {
         let item = await this.db.query(
-            `select name, id, description, thumbnail, category from Item where id = "${id}"`
+            `select name, id, description, thumbnail from Item where id = "${id}"`
         );
 
         if (!item[0]) throw "No item found";
@@ -159,7 +158,7 @@ export default class Market {
             itemExist = item[0].id;
             itemId = item[0].id;
             returnObject.warn =
-                "Item already exist: it was not recreate so your description, category and thumbnail have not been taken into account";
+                "Item already exist: it was not recreate so your description and thumbnail have not been taken into account";
         } else itemId = await this.createItem(options);
 
         if (!itemId) throw "Fatal server error";
@@ -178,7 +177,7 @@ export default class Market {
 
     private static async createItem(options: ItemCreationOptions): Promise<number> {
         await this.db.query(
-            `insert into item (name, description, category, thumbnail, stack) values ("${options.name}", "${options.description}", "${options.category}", "${options.thumbnail}", "${options.stack}")`
+            `insert into item (name, description, thumbnail, stack) values ("${options.name}", "${options.description}", "${options.thumbnail}", "${options.stack}")`
         );
         let id = await this.db.query(`SELECT id from item where name = "${options.name}"`);
         if (id[0]) return id[0].id;
