@@ -23,6 +23,7 @@ interface ItemCreationOptions {
     category: string;
     price: number;
     stock: number;
+    stack: number;
 }
 
 interface item_seller {

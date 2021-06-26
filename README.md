@@ -108,7 +108,8 @@ purchase = 4
     thumbnail: string,
     category: string,
     price: number,
-    stock: number
+    stock: number,
+    stack: number
 }
 ```
 

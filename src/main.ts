@@ -296,6 +296,11 @@ app.post(/^\/api\/market\/items\/new\/?$/i, authorizationMiddleware, (req, res) 
         return;
     }
 
+    if (!req.body.stack) {
+        res.json({ error: "stack is required in the body" });
+        return;
+    }
+
     if (!(req as any).data.user.id) {
         res.status(500).end("Fatal server error");
     }

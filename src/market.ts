@@ -178,7 +178,7 @@ export default class Market {
 
     private static async createItem(options: ItemCreationOptions): Promise<number> {
         await this.db.query(
-            `insert into item (name, description, category, thumbnail) values ("${options.name}", "${options.description}", "${options.category}", "${options.thumbnail}")`
+            `insert into item (name, description, category, thumbnail, stack) values ("${options.name}", "${options.description}", "${options.category}", "${options.thumbnail}", "${options.stack}")`
         );
         let id = await this.db.query(`SELECT id from item where name = "${options.name}"`);
         if (id[0]) return id[0].id;
@@ -253,14 +253,13 @@ export default class Market {
         );
 
         (async () => {
-            let sellers_items: any[] = await this.db.query(`select id from seller_item where item_id = "${seller_item.item_id}"`);
+            let sellers_items: any[] = await this.db.query(
+                `select id from seller_item where item_id = "${seller_item.item_id}"`
+            );
 
-            if (sellers_items.length === 0)
-                await this.db.query(`delete from item where id = "${seller_item.item_id}"`);
+            if (sellers_items.length === 0) await this.db.query(`delete from item where id = "${seller_item.item_id}"`);
         })();
 
-        return Boolean(
-            r.affectedRows
-        );
+        return Boolean(r.affectedRows);
     }
 }
