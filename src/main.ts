@@ -376,7 +376,7 @@ app.patch(/^\/api\/market\/items\/full_description\/?$/i, authorizationMiddlewar
         return;
     }
 
-    Market.editSellerItemPrice(req.body.id, (req as any).data.user.workin, req.body.full_description)
+    Market.editSellerItemFullDescription(req.body.id, (req as any).data.user.workin, req.body.full_description)
         .then(success => {
             res.json({ success: success });
         })
@@ -636,7 +636,8 @@ app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
 
 
 app.get(/^\/api\/search\/?(\S*)/i, (req, res) => {
-    Search.search((req.params as any).q ?? "")
+
+    Search.search(new URL("http://example.com" + req.url).searchParams.get("q") ?? "")
         .then(result => {
             res.json(result);
         })

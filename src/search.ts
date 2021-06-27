@@ -5,11 +5,11 @@ export default class Search {
 
     static init(db: mariadb.Pool) {
         this.db = db;
-
-        this.search("patate cuite");
     }
 
     static async search(query: string) {
+        query = query.toLowerCase();
+
         // console.time("search");
         let items: Item[] = await this.db.query("select id, name from Item");
 
@@ -19,14 +19,24 @@ export default class Search {
             let sorted = [...items].sort((a, b) => {
                 let result = Infinity;
 
+                if (a.name.toLowerCase() === word) return -1;
+
                 a.name.split(" ").forEach(itemANameWord => {
+                    itemANameWord = itemANameWord.toLowerCase();
+
+                    if (itemANameWord === word) return -1;
+
                     b.name.split(" ").forEach(itemBNameWord => {
+                        itemBNameWord = itemBNameWord.toLowerCase();
+
                         let x = this.Levenshtein(word, itemANameWord) - this.Levenshtein(word, itemBNameWord);
                         result = x < result ? x : result;
                     });
                 });
                 return result;
             });
+
+            console.log(sorted);
 
             let arr: ItemTriable[] = [];
             sorted.forEach((item, i) => {
