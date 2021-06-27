@@ -210,7 +210,7 @@ export default class Market {
         if (isNaN(newStock)) throw "stock must be a number";
 
         let r = await this.db.query(
-            `update seller_item set stock = ${newStock} where id = "${seller_item_id}" and seller_id = "${seller_id}"`
+            `update seller_item set stock = "${newStock}" where id = "${seller_item_id}" and seller_id = "${seller_id}"`
         );
 
         return Boolean(r.affectedRows);
@@ -222,7 +222,7 @@ export default class Market {
         if (isNaN(newPrice)) throw "sold must be a number";
 
         let r = await this.db.query(
-            `update seller_item set price = ${newPrice} where id = "${seller_item_id}" and seller_id = "${seller_id}"`
+            `update seller_item set price = "${newPrice}" where id = "${seller_item_id}" and seller_id = "${seller_id}"`
         );
 
         return Boolean(r.affectedRows);
@@ -230,7 +230,7 @@ export default class Market {
 
     static async editSellerItemFullDescription(seller_item_id: string, seller_id: string, fullDescription: number) {
         let r = await this.db.query(
-            `update seller_item set full_description = ${fullDescription} where id = "${seller_item_id}" and seller_id = "${seller_id}"`
+            `update seller_item set full_description = "${fullDescription}" where id = "${seller_item_id}" and seller_id = "${seller_id}"`
         );
 
         return Boolean(r.affectedRows);
