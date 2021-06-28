@@ -1,15 +1,16 @@
 import mariadb from "mariadb";
 import Bank from "./Bank";
 import Delivery from "./Delivery";
-import Sellers from "./sellers";
 import userHistory from "./user_history";
-import { account_event_type } from "./utils";
+import { account_event_type, sanityzeObjectStringToSQL, sanityzeStringToSQL } from "./utils";
 
 export default class Market {
     private static db: mariadb.Pool;
 
     static init(db: mariadb.Pool) {
         this.db = db;
+
+        sanityzeObjectStringToSQL({ x: 'salut"', y: "coucou" });
     }
 
     static async getAllItems(): Promise<ItemWithSellers[]> {
@@ -38,9 +39,7 @@ export default class Market {
     }
 
     static async getItem(id: string): Promise<ItemWithSellers> {
-        let item = await this.db.query(
-            `select name, id, description, thumbnail from Item where id = "${id}"`
-        );
+        let item = await this.db.query(`select name, id, description, thumbnail from Item where id = "${id}"`);
 
         if (!item[0]) throw "No item found";
 
@@ -152,10 +151,8 @@ export default class Market {
 
         let item = await this.db.query(`select id from item where name = "${options.name}"`);
 
-        let itemExist: number | null = null;
         let itemId: number | null = null;
         if (item[0]) {
-            itemExist = item[0].id;
             itemId = item[0].id;
             returnObject.warn =
                 "Item already exist: it was not recreate so your description and thumbnail have not been taken into account";
@@ -228,7 +225,7 @@ export default class Market {
         return Boolean(r.affectedRows);
     }
 
-    static async editSellerItemFullDescription(seller_item_id: string, seller_id: string, fullDescription: number) {
+    static async editSellerItemFullDescription(seller_item_id: string, seller_id: string, fullDescription: string) {
         let r = await this.db.query(
             `update seller_item set full_description = "${fullDescription}" where id = "${seller_item_id}" and seller_id = "${seller_id}"`
         );

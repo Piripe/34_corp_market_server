@@ -12,6 +12,7 @@ import Users from "./users";
 import Delivery from "./Delivery";
 import Sellers from "./sellers";
 import Search from "./search";
+import { sanityzeObjectStringToSQL, sanityzeStringToSQL } from "./utils";
 
 const app = express();
 
@@ -89,6 +90,11 @@ app.use((req, res, next) => {
 // api
 
 app.use("/api", express.json());
+
+app.use("/api", (req, res, next) => {
+    sanityzeObjectStringToSQL(req.body);
+    next();
+});
 
 app.use("/api", (req, res, next) => {
     total_api_request_count_from_last_start_up++;
@@ -634,9 +640,7 @@ app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     }
 });
 
-
 app.get(/^\/api\/search\/?(\S*)/i, (req, res) => {
-
     Search.search(new URL("http://example.com" + req.url).searchParams.get("q") ?? "")
         .then(result => {
             res.json(result);
@@ -646,13 +650,10 @@ app.get(/^\/api\/search\/?(\S*)/i, (req, res) => {
         });
 });
 
-
 app.use("/api", (req, res) => {
     //404 api
     res.status(404).contentType("text").end("Not found");
 });
-
-
 
 // End api
 
