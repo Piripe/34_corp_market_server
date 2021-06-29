@@ -15,4 +15,6 @@ export function sanityzeObjectStringToSQL(obj: any) {
         if (typeof value === "string") obj[key] = sanityzeStringToSQL(value);
         else if (typeof value === "object") obj[key] = sanityzeObjectStringToSQL(value);
     }
+
+    return obj;
 }

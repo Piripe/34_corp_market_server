@@ -43,18 +43,24 @@ export default class Bank {
         if (amount < 0) throw "Amount must be positive";
 
         await this.modifySold(fromUserId, -amount);
-        await this.modifySold(toUserID, await this.calcTaxe(amount));
+        await this.modifySold(toUserID, await this.payTaxe(amount));
 
         userHistory.add(fromUserId, account_event_type.debit, { amount: amount, to: toUserID });
         userHistory.add(fromUserId, account_event_type.credit, { amount: amount, from: fromUserId });
     }
 
-    static async calcTaxe(amount: number) {
+    static calcTaxe(amount: number): number {
         amount = parseFloat(amount.toString());
 
         if (isNaN(amount)) throw "Amount is not a number";
 
         let taxe = amount * (5 / 100);
+
+        return taxe;
+    }
+
+    static async payTaxe(amount: number) {
+        let taxe = this.calcTaxe(amount);
 
         await this.modifySold(config.fiscName, taxe, "Seller");
 

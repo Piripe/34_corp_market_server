@@ -253,6 +253,9 @@ app.post(/^\/api\/market\/buy\/?$/i, authorizationMiddleware, (req, res) => {
         return;
     }
 
+    console.log(req.body);
+    
+
     Market.buy((req as any).data.user.id, req.body)
         .then(() => {
             res.json({ success: true });

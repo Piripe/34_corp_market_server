@@ -1,5 +1,6 @@
 import maridb from "mariadb";
 import Notifications from "./Notifications";
+import Bank from "./Bank";
 
 export default class Delivery {
     static db: maridb.Pool;
@@ -97,9 +98,19 @@ export default class Delivery {
     }
 
     static async cancel(id: string, userId: string) {
+        let delivery = await this.getFromId(id);
+
+        if (delivery.client_id !== userId.toString()) throw "Not authorized";
+
         let r = await this.db.query(
             `delete from delivery where id = "${id}" and client_id = "${userId}" and status = 0`
         );
         return Boolean(r.affectedRows);
     }
+
+    // static async repayDelivery(delivery: delivery) {
+    //     let taxe = Bank.calcTaxe(delivery.total);
+
+    //     await Bank.modifySold(delivery.client_id, delivery.total)
+    // }
 }

@@ -2,19 +2,17 @@ import mariadb from "mariadb";
 import Bank from "./Bank";
 import Delivery from "./Delivery";
 import userHistory from "./user_history";
-import { account_event_type, sanityzeObjectStringToSQL, sanityzeStringToSQL } from "./utils";
+import { account_event_type } from "./utils";
 
 export default class Market {
     private static db: mariadb.Pool;
 
     static init(db: mariadb.Pool) {
         this.db = db;
-
-        sanityzeObjectStringToSQL({ x: 'salut"', y: "coucou" });
     }
 
     static async getAllItems(): Promise<ItemWithSellers[]> {
-        let items = await this.db.query("select name, id, description, thumbnail from Item");
+        let items: Item[] = await this.db.query("select name, id, description, thumbnail, stack from Item");
 
         let result_items: ItemWithSellers[] = [];
         for (const item of items) {
@@ -23,7 +21,7 @@ export default class Market {
         return result_items;
     }
 
-    private static async getItem_sellers(item: any) {
+    private static async getItem_sellers(item: Item) {
         return new Promise<ItemWithSellers>(async resolve => {
             let sellers: item_seller[] = await this.db.query(
                 `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.full_description, seller_item.price, seller_item.id as seller_item_id, seller_item.stock from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.item_id = "${item.id}"`
@@ -34,6 +32,7 @@ export default class Market {
                 name: item.name,
                 thumbnail: item.thumbnail,
                 sellers: sellers,
+                stack: item.stack,
             });
         });
     }
@@ -61,7 +60,7 @@ export default class Market {
         if (amount < 0) throw "Amount must be positive";
 
         await Bank.modifySold(userId, -amount);
-        await Bank.modifySold(sellerId, await Bank.calcTaxe(amount), "Seller");
+        await Bank.modifySold(sellerId, await Bank.payTaxe(amount), "Seller");
     }
 
     static async getSeller_Item(id: string | string[]): Promise<item_seller[]> {
@@ -81,11 +80,15 @@ export default class Market {
 
         user = user[0];
 
+        console.log(items);
+        
+
         let items_id = items.map(item => item.id);
 
         let sellers_items = await this.getSeller_Item(items_id);
 
         let total_sold = 0;
+
 
         items.forEach(item => {
             if (!item.quantity) throw "Each element must have a quantity";
@@ -104,6 +107,7 @@ export default class Market {
 
             total_sold += seller_item.price * item.quantity;
         });
+
 
         if (total_sold > user.sold) throw "Not enough money";
 
