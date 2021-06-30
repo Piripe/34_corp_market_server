@@ -60,7 +60,7 @@ export default class Bank {
     static async payTaxe(amount: number) {
         let taxe = this.calcTaxe(amount);
 
-        await this.modifySold(config.fiscName, taxe, "Seller");
+        await this.modifySold(config.fiscId, taxe, "Seller");
 
         return amount - taxe;
     }

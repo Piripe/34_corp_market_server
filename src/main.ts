@@ -1,3 +1,4 @@
+import http from "http";
 import https from "https";
 import fs from "fs";
 
@@ -15,17 +16,25 @@ import Users from "./users";
 import Delivery from "./Delivery";
 import Sellers from "./sellers";
 import Search from "./search";
-import { sanityzeObjectStringToSQL, sanityzeStringToSQL } from "./utils";
+import { sanityzeObjectStringToSQL } from "./utils";
+
+const isSecure = process.argv[2] !== "--unsecure";
 
 const app = express();
 
-const server = https.createServer(
-    {
-        key: fs.readFileSync("./private/privkey.pem"),
-        cert: fs.readFileSync("./private/fullchain.pem"),
-    },
-    app
-);
+let server: https.Server | null = null;
+
+if (isSecure) {
+    server = https.createServer(
+        {
+            key: fs.readFileSync("./private/privkey.pem"),
+            cert: fs.readFileSync("./private/fullchain.pem"),
+        },
+        app
+    );
+}
+
+const httpServer = http.createServer(app);
 
 let db: mariadb.Pool;
 
@@ -47,6 +56,13 @@ setInterval(() => {
     if (last_hour_api_request_count.length > 60) last_hour_api_request_count.shift();
     last_minute_api_request_count = 0;
 }, 1000 * 60);
+
+if (isSecure) app.enable("trust proxy");
+
+if (isSecure)
+    app.use((req, res, next) => {
+        req.secure ? next() : res.redirect("https://" + req.headers.host + req.url);
+    });
 
 const authorizationMiddleware = async (req: any, res: any, next: any) => {
     if (!req.headers.authorization) {
@@ -689,7 +705,8 @@ async function start() {
     Delivery.init(db);
     Sellers.init(db);
     Search.init(db);
-    server.listen(config.port, () => console.log(`Server started at port ${config.port}`));
+    if (isSecure) (server as any).listen(config.port, () => console.log(`Server started at port ${config.port}`));
+    httpServer.listen(config.unsecureServerPort, () => console.log(`Server started at port ${config.unsecureServerPort}`));
 }
 
 async function authorize(token: string): Promise<User> {

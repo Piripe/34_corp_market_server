@@ -115,6 +115,6 @@ export default class Delivery {
             await Bank.modifySold(item.seller_id, -(item.price * item.quantity), "Seller");
         }
 
-        await Bank.modifySold(config.fiscName, -taxe, "Seller");
+        await Bank.modifySold(config.fiscId, -taxe, "Seller");
     }
 }
