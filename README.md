@@ -9,7 +9,8 @@
     description: string,
     thumbnail: string / url,
     sellers: Seller_Item[],
-    stack: number
+    stack: number,
+    tags: string[]
 }
 ```
 
@@ -24,7 +25,8 @@
     description: string,
     full_description: string,
     price: number,
-    stock: number
+    stock: number,
+    tags: string[]
 }
 ```
 
@@ -109,7 +111,8 @@ crediFromSeller = 5
     thumbnail: string,
     price: number,
     stock: number,
-    stack: number
+    stack: number,
+    tags: string[]
 }
 ```
 

@@ -13,36 +13,35 @@ export default class Market {
     }
 
     static async getAllItems(): Promise<ItemWithSellers[]> {
-        let items: Item[] = await this.db.query("select name, id, description, thumbnail, stack from Item");
+        let items: Item[] = await this.db.query("select name, id, description, thumbnail, stack, tags from Item");
 
         let result_items: ItemWithSellers[] = [];
         for (const item of items) {
+            item.tags = (item.tags as any as string).split(" ");
             result_items.push(await this.getItem_sellers(item));
         }
         return result_items;
     }
 
-    private static async getItem_sellers(item: Item) {
-        return new Promise<ItemWithSellers>(async resolve => {
-            let sellers: item_seller[] = await this.db.query(
-                `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.full_description, seller_item.price, seller_item.id as seller_item_id, seller_item.stock from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.item_id = "${item.id}"`
-            );
-            resolve({
-                description: item.description,
-                id: item.id,
-                name: item.name,
-                thumbnail: item.thumbnail,
-                sellers: sellers,
-                stack: item.stack,
-            });
-        });
+    private static async getItem_sellers(item: Item): Promise<ItemWithSellers> {
+        let sellers: item_seller[] = await this.db.query(
+            `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.full_description, seller_item.price, seller_item.id as seller_item_id, seller_item.stock from seller_item inner join Seller on seller_item.seller_id = Seller.id where seller_item.item_id = "${item.id}"`
+        );
+        let r: ItemWithSellers = { ...item } as ItemWithSellers;
+
+        r.sellers = sellers;
+
+        return r;
     }
 
     static async getItem(id: string): Promise<ItemWithSellers> {
-        let item = await this.db.query(`select name, id, description, thumbnail, stack from Item where id = "${id}"`);
+        let item: Item[] = await this.db.query(
+            `select name, id, description, thumbnail, stack, tags from Item where id = "${id}"`
+        );
 
         if (!item[0]) throw "No item found";
 
+        item[0].tags = (item[0].tags as any as string).split(" ");
         return await this.getItem_sellers(item[0]);
     }
 
@@ -179,6 +178,10 @@ export default class Market {
 
         if (!sellerId) throw "You must work";
 
+        options.tags.forEach(tag => {
+            if (tag.includes(" ")) throw "Tag must not includes space";
+        });
+
         let item = await this.db.query(`select id from item where name = "${options.name}"`);
 
         let itemId: number | null = null;
@@ -204,7 +207,7 @@ export default class Market {
 
     private static async createItem(options: ItemCreationOptions): Promise<number> {
         await this.db.query(
-            `insert into item (name, description, thumbnail, stack) values ("${options.name}", "${options.description}", "${options.thumbnail}", "${options.stack}")`
+            `insert into item (name, description, thumbnail, stack, tags) values ("${options.name}", "${options.description}", "${options.thumbnail}", "${options.stack}", "${options.tags.join(" ")}")`
         );
         let id = await this.db.query(`SELECT id from item where name = "${options.name}"`);
         if (id[0]) return id[0].id;
