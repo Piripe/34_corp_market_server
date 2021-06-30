@@ -54,9 +54,7 @@ export default class Bank {
 
         if (isNaN(amount)) throw "Amount is not a number";
 
-        let taxe = amount * (5 / 100);
-
-        return taxe;
+        return amount * (5 / 100);
     }
 
     static async payTaxe(amount: number) {

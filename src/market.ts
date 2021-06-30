@@ -73,22 +73,27 @@ export default class Market {
         );
     }
 
-    static async buy(userId: string, items: { id: string; quantity: number }[]) {
+    static async buy(userId: string, is: { id: string; quantity: number }[]) {
+        let items: delivery_items[] = [];
+
+        for (const item of is) {
+            let i = (await this.getSeller_Item(item.id))[0];
+            items.push({ id: item.id, quantity: item.quantity, price: i.price, seller_id: i.seller_id });
+        }
+
+        console.log(items);
+
         let user = await this.db.query(`select id, sold from User where id = "${userId}"`);
 
         if (!user[0]) throw "User not found";
 
         user = user[0];
 
-        console.log(items);
-        
-
         let items_id = items.map(item => item.id);
 
         let sellers_items = await this.getSeller_Item(items_id);
 
         let total_sold = 0;
-
 
         items.forEach(item => {
             if (!item.quantity) throw "Each element must have a quantity";
@@ -107,7 +112,6 @@ export default class Market {
 
             total_sold += seller_item.price * item.quantity;
         });
-
 
         if (total_sold > user.sold) throw "Not enough money";
 

@@ -40,11 +40,18 @@ interface delivery {
     id: string;
     client_id: string;
     deliveryman_id: string;
-    items: { id: string; quantity: number }[];
+    items: delivery_items[];
     command_date: string;
     status: number;
     priority: number;
     total: number;
+}
+
+interface delivery_items {
+    id: string;
+    quantity: number;
+    price: number;
+    seller_id: string;
 }
 
 interface Seller {

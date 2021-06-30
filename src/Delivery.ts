@@ -1,6 +1,7 @@
 import maridb from "mariadb";
 import Notifications from "./Notifications";
 import Bank from "./Bank";
+import config from "./config";
 
 export default class Delivery {
     static db: maridb.Pool;
@@ -9,12 +10,7 @@ export default class Delivery {
         this.db = db;
     }
 
-    static async createDelivery(
-        userId: string,
-        items: { id: string; quantity: number }[],
-        priority: number,
-        totalSold: number
-    ) {
+    static async createDelivery(userId: string, items: delivery_items[], priority: number, totalSold: number) {
         await this.db.query(
             `insert into delivery(client_id, items, priority, total) values ("${userId}",  '${JSON.stringify(
                 items
@@ -100,7 +96,9 @@ export default class Delivery {
     static async cancel(id: string, userId: string) {
         let delivery = await this.getFromId(id);
 
-        if (delivery.client_id !== userId.toString()) throw "Not authorized";
+        if (delivery.client_id !== userId) throw "Not authorized";
+
+        await this.repayDelivery(delivery);
 
         let r = await this.db.query(
             `delete from delivery where id = "${id}" and client_id = "${userId}" and status = 0`
@@ -108,9 +106,15 @@ export default class Delivery {
         return Boolean(r.affectedRows);
     }
 
-    // static async repayDelivery(delivery: delivery) {
-    //     let taxe = Bank.calcTaxe(delivery.total);
+    static async repayDelivery(delivery: delivery) {
+        let taxe = Bank.calcTaxe(delivery.total);
 
-    //     await Bank.modifySold(delivery.client_id, delivery.total)
-    // }
+        await Bank.modifySold(delivery.client_id, delivery.total);
+
+        for (const item of delivery.items) {
+            await Bank.modifySold(item.seller_id, -(item.price * item.quantity), "Seller");
+        }
+
+        await Bank.modifySold(config.fiscName, -taxe, "Seller");
+    }
 }

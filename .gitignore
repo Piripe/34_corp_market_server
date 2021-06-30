@@ -3,3 +3,4 @@ dist/
 src/config.ts
 package-lock.json
 test.js
+private/

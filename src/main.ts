@@ -1,3 +1,6 @@
+import https from "https";
+import fs from "fs";
+
 import express from "express";
 import config from "./config";
 import { createHash, randomBytes } from "crypto";
@@ -15,6 +18,14 @@ import Search from "./search";
 import { sanityzeObjectStringToSQL, sanityzeStringToSQL } from "./utils";
 
 const app = express();
+
+const server = https.createServer(
+    {
+        key: fs.readFileSync("./private/privkey.pem"),
+        cert: fs.readFileSync("./private/fullchain.pem"),
+    },
+    app
+);
 
 let db: mariadb.Pool;
 
@@ -252,9 +263,6 @@ app.post(/^\/api\/market\/buy\/?$/i, authorizationMiddleware, (req, res) => {
         res.json({ error: "Body must be an array" });
         return;
     }
-
-    console.log(req.body);
-    
 
     Market.buy((req as any).data.user.id, req.body)
         .then(() => {
@@ -681,7 +689,7 @@ async function start() {
     Delivery.init(db);
     Sellers.init(db);
     Search.init(db);
-    app.listen(config.port, () => console.log(`Server started at port ${config.port}`));
+    server.listen(config.port, () => console.log(`Server started at port ${config.port}`));
 }
 
 async function authorize(token: string): Promise<User> {
