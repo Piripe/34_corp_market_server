@@ -2,6 +2,7 @@ import maridb from "mariadb";
 import Notifications from "./Notifications";
 import Bank from "./Bank";
 import config from "./config";
+import Market from "./market";
 
 export default class Delivery {
     static db: maridb.Pool;
@@ -83,6 +84,8 @@ export default class Delivery {
 
         if (delivery.deliveryman_id !== deliveryMan_id) throw "Delivery does not belong to you";
 
+        Bank.modifySold(deliveryMan_id, Market.calcDeliveryPrice(delivery.items));
+
         await this.db.query(`update delivery set status = "2" where id = "${id}"`);
 
         Notifications.add(
@@ -115,6 +118,8 @@ export default class Delivery {
             await Bank.modifySold(item.seller_id, -(item.price * item.quantity - taxe), "Seller", true);
         }
 
-        await Bank.modifySold(config.fiscId, -taxe, "Seller", true);
+        let delivery_price = Market.calcDeliveryPrice(delivery.items);
+
+        await Bank.modifySold(config.fiscId, delivery_price, "Seller");
     }
 }

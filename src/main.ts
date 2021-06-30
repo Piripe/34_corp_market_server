@@ -671,6 +671,31 @@ app.get(/^\/api\/sellers\/([a-z0-9_]+)\/?$/i, async (req, res) => {
     }
 });
 
+app.post(/^\/api\/sellers\/pay\/?$/i, authorizationMiddleware, (req, res) => {
+    if (!(req as any).data.user.workin) {
+        res.json({ error: "You must work" });
+        return;
+    }
+
+    if (!req.body.userId) {
+        res.json({ error: "userId required" });
+        return;
+    }
+
+    if (!req.body.amount) {
+        res.json({ error: "Amount required" });
+        return;
+    }
+
+    Sellers.payUser(req.body.userId, (req as any).data.user.workin, req.body.amount)
+        .then(() => {
+            res.json({ success: true });
+        })
+        .catch(reason => {
+            res.json({ error: reason.toString() });
+        });
+});
+
 app.get(/^\/api\/search\/?(\S*)/i, (req, res) => {
     Search.search(new URL("http://example.com" + req.url).searchParams.get("q") ?? "")
         .then(result => {

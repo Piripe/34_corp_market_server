@@ -46,7 +46,7 @@ export default class Bank {
         await this.modifySold(toUserID, await this.payTaxe(amount));
 
         userHistory.add(fromUserId, account_event_type.debit, { amount: amount, to: toUserID });
-        userHistory.add(fromUserId, account_event_type.credit, { amount: amount, from: fromUserId });
+        userHistory.add(toUserID, account_event_type.credit, { amount: amount, from: fromUserId });
     }
 
     static calcTaxe(amount: number): number {

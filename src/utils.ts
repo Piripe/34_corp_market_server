@@ -4,6 +4,7 @@ export enum account_event_type {
     "credit",
     "debit",
     "purchase",
+    "creditFromSeller"
 }
 
 export function sanityzeStringToSQL(str: string) {

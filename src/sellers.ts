@@ -1,4 +1,7 @@
 import mariadb from "mariadb";
+import Bank from "./Bank";
+import userHistory from "./user_history";
+import { account_event_type } from "./utils";
 
 export default class Sellers {
     static db: mariadb.Pool;
@@ -25,5 +28,16 @@ export default class Sellers {
             id: seller.id,
             name: seller.name,
         };
+    }
+
+    static async payUser(userId: string, sellerId: string, amount: number) {
+        amount = parseFloat(amount.toString());
+
+        if (isNaN(amount)) throw "Amount must be a number";
+
+        await Bank.modifySold(sellerId, -amount, "Seller");
+        await Bank.modifySold(userId, amount);
+
+        await userHistory.add(userId, account_event_type.creditFromSeller, { amount: amount, from: sellerId });
     }
 }

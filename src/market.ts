@@ -1,5 +1,6 @@
 import mariadb from "mariadb";
 import Bank from "./Bank";
+import config from "./config";
 import Delivery from "./Delivery";
 import userHistory from "./user_history";
 import { account_event_type } from "./utils";
@@ -38,7 +39,7 @@ export default class Market {
     }
 
     static async getItem(id: string): Promise<ItemWithSellers> {
-        let item = await this.db.query(`select name, id, description, thumbnail from Item where id = "${id}"`);
+        let item = await this.db.query(`select name, id, description, thumbnail, stack from Item where id = "${id}"`);
 
         if (!item[0]) throw "No item found";
 
@@ -67,8 +68,9 @@ export default class Market {
         let ids = Array.isArray(id) ? id.join(", ") : id;
 
         return await this.db.query(
-            `select Seller.name, Seller.description, Seller.id as seller_id, seller_item.item_id, seller_item.price, seller_item.stock, seller_item.id as seller_item_id
-            from seller_item inner join Seller on seller_item.seller_id = Seller.id where
+            `select item.stack, Seller.name, Seller.description, Seller.id as seller_id, seller_item.item_id, seller_item.price, seller_item.stock, seller_item.id as seller_item_id
+            from seller_item inner join Seller on seller_item.seller_id = Seller.id 
+            inner join item on seller_item.item_id = item.id where
             seller_item.id in (${ids})`
         );
     }
@@ -78,10 +80,14 @@ export default class Market {
 
         for (const item of is) {
             let i = (await this.getSeller_Item(item.id))[0];
-            items.push({ id: item.id, quantity: item.quantity, price: i.price, seller_id: i.seller_id });
+            items.push({
+                id: item.id,
+                quantity: item.quantity,
+                price: i.price,
+                seller_id: i.seller_id,
+                stack: i.stack,
+            });
         }
-
-        console.log(items);
 
         let user = await this.db.query(`select id, sold from User where id = "${userId}"`);
 
@@ -113,11 +119,17 @@ export default class Market {
             total_sold += seller_item.price * item.quantity;
         });
 
+        let delivery_price = this.calcDeliveryPrice(items);
+
+        total_sold += delivery_price;
+
         if (total_sold > user.sold) throw "Not enough money";
 
         for (const item of items) {
             await buyOne(this.db, item);
         }
+
+        await Bank.modifySold(userId, -delivery_price);
 
         Delivery.createDelivery(userId, items, 0, total_sold);
 
@@ -150,6 +162,16 @@ export default class Market {
 
             await Market.pay(userId, seller_item.seller_id, seller_item.price * item.quantity);
         }
+    }
+
+    static calcDeliveryPrice(items: delivery_items[]): number {
+        let price = 0;
+
+        items.forEach(item => {
+            price += Math.ceil(item.quantity / item.stack) * config.slotPrice;
+        });
+
+        return price;
     }
 
     static async newItem(sellerId: string | null, options: ItemCreationOptions) {

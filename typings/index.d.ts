@@ -34,6 +34,7 @@ interface item_seller {
     full_description: string;
     price: number;
     stock: number;
+    stack: number;
 }
 
 interface delivery {
@@ -52,6 +53,7 @@ interface delivery_items {
     quantity: number;
     price: number;
     seller_id: string;
+    stack: number;
 }
 
 interface Seller {

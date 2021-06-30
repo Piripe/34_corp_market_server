@@ -8,7 +8,8 @@
     name: string,
     description: string,
     thumbnail: string / url,
-    sellers: Seller_Item[]
+    sellers: Seller_Item[],
+    stack: number
 }
 ```
 
@@ -59,6 +60,7 @@ get = 1
 credit = 2
 debit = 3
 purchase = 4
+crediFromSeller = 5
 ```
 
 ### Delivery:
@@ -570,6 +572,29 @@ response:
 
 ```
 SellerNoSold
+```
+
+### POST sellers/pay:
+
+**Virement vendeur - user**
+
+Authorization header nécessaire
+
+body:
+
+```
+{
+    userId: id,
+    amount: number
+}
+```
+
+response:
+
+```
+{
+    success: true
+}
 ```
 
 ## Search
