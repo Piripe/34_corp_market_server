@@ -29,7 +29,7 @@ export default class Search {
             });
         });
 
-        let sorted = triables_items.sort((a, b) => a.weight - b.weight);
+        let sorted = triables_items.sort((a, b) => b.weight - a.weight);
 
         console.log(sorted);
         
