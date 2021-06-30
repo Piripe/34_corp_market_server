@@ -1,97 +1,40 @@
 import mariadb from "mariadb";
+import Market from "./market";
 
 export default class Search {
     static db: mariadb.Pool;
 
-    static init(db: mariadb.Pool) {
+    static async init(db: mariadb.Pool) {
         this.db = db;
+
+        console.log(await this.search("livre sharpness V"));
     }
 
     static async search(query: string) {
         query = query.toLowerCase();
 
-        // console.time("search");
-        let items: Item[] = await this.db.query("select id, name from Item");
+        let tags = query.split(" ");
 
-        let all_sorted: ItemTriable[][] = [];
+        let items = await Market.getAllItems();
 
-        query.split(" ").forEach(word => {
-            let sorted = [...items].sort((a, b) => {
-                let result = Infinity;
+        let triables_items: ItemTriable[] = [];
 
-                if (a.name.toLowerCase() === word) return -1;
-
-                a.name.split(" ").forEach(itemANameWord => {
-                    itemANameWord = itemANameWord.toLowerCase();
-
-                    if (itemANameWord === word) return -1;
-
-                    b.name.split(" ").forEach(itemBNameWord => {
-                        itemBNameWord = itemBNameWord.toLowerCase();
-
-                        let x = this.Levenshtein(word, itemANameWord) - this.Levenshtein(word, itemBNameWord);
-                        result = x < result ? x : result;
-                    });
-                });
-                return result;
-            });
-
-            console.log(sorted);
-
-            let arr: ItemTriable[] = [];
-            sorted.forEach((item, i) => {
-                arr.push(new ItemTriable(item, i));
-            });
-
-            all_sorted.push(arr);
+        items.forEach(item => {
+            triables_items.push(new ItemTriable(item));
         });
 
-        let result_array: ItemTriable[] = [];
-
-        all_sorted.forEach(sorted => {
-            sorted.forEach(item => {
-                let findIndex = result_array.findIndex(i => i.item.name === item.item.name);
-                if (findIndex >= 0) result_array[findIndex].weight += item.weight;
-                else result_array.push({ ...item });
+        tags.forEach(tag => {
+            triables_items.forEach(item => {
+                if (item.item.tags.includes(tag)) item.weight += 1;
             });
         });
 
-        // console.timeEnd("search");
+        let sorted = triables_items.sort((a, b) => a.weight - b.weight);
 
-        // console.log(all_sorted.map(a => a.map(i => i.item.name + " " + i.weight)));
+        console.log(sorted);
+        
 
-        return result_array.map(item => item.item.id);
-    }
-
-    private static Levenshtein(str1: string, str2: string) {
-        // console.time("leven");
-
-        let D: number[][] = [];
-
-        let cost: number;
-
-        for (let i = 0; i <= str1.length; i++) {
-            D[i] = [];
-            for (let j = 0; j <= str2.length; j++) {
-                if (i * j === 0) {
-                    D[i][0] = i;
-                    D[0][j] = j;
-                } else D[i][j] = 0;
-            }
-        }
-
-        for (let i = 1; i <= str1.length; i++) {
-            for (let j = 1; j <= str2.length; j++) {
-                if (str1[i - 1] === str2[j - 1]) cost = 0;
-                else cost = 1;
-
-                D[i][j] = Math.min(D[i - 1][j] + 1, D[i][j - 1] + 1, D[i - 1][j - 1] + cost);
-            }
-        }
-        // console.timeEnd("leven");
-        // console.log(str2);
-
-        return D[str1.length][str2.length];
+        return sorted.map(item => item.item.id);
     }
 }
 
@@ -99,7 +42,7 @@ class ItemTriable {
     readonly item: Item;
     weight: number;
 
-    constructor(item: Item, weight: number) {
+    constructor(item: Item, weight: number = 0) {
         this.item = item;
         this.weight = weight;
     }
