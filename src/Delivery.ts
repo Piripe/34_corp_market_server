@@ -112,9 +112,9 @@ export default class Delivery {
         await Bank.modifySold(delivery.client_id, delivery.total);
 
         for (const item of delivery.items) {
-            await Bank.modifySold(item.seller_id, -(item.price * item.quantity), "Seller");
+            await Bank.modifySold(item.seller_id, -(item.price * item.quantity - taxe), "Seller", true);
         }
 
-        await Bank.modifySold(config.fiscId, -taxe, "Seller");
+        await Bank.modifySold(config.fiscId, -taxe, "Seller", true);
     }
 }

@@ -542,6 +542,10 @@ app.get(/^\/api\/deliveries\/?$/i, authorizationMiddleware, (req, res) => {
         });
 });
 
+app.get(/^\/api\/deliveries\/slotPrice\/?$/i, (req, res) => {
+    res.json({ price: config.slotPrice });
+});
+
 app.get(/^\/api\/deliveries\/toDelivery\/?$/i, authorizationMiddleware, async (req, res) => {
     if (await Delivery.checkIsDeliveryMan((req as any).data.user.id))
         Delivery.getForDelivery()
@@ -706,7 +710,9 @@ async function start() {
     Sellers.init(db);
     Search.init(db);
     if (isSecure) (server as any).listen(config.port, () => console.log(`Server started at port ${config.port}`));
-    httpServer.listen(config.unsecureServerPort, () => console.log(`Server started at port ${config.unsecureServerPort}`));
+    httpServer.listen(config.unsecureServerPort, () =>
+        console.log(`Server started at port ${config.unsecureServerPort}`)
+    );
 }
 
 async function authorize(token: string): Promise<User> {

@@ -458,6 +458,18 @@ reponse:
 Delivery[]
 ```
 
+### GET deliveries/slotPrice:
+
+**Récupère le prix de la livraison par slot**
+
+response:
+
+```
+{
+    price: number
+}
+```
+
 ### POST deliveries/start:
 
 **Marque la livraison comme étant livré par l'utilisateur et la passe en status 1**

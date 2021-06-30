@@ -10,7 +10,7 @@ export default class Bank {
         this.db = db;
     }
 
-    static async modifySold(userId: string, amount: number, tableName: "User" | "Seller" = "User") {
+    static async modifySold(userId: string, amount: number, tableName: "User" | "Seller" = "User", force = false) {
         let user = await this.db.query(`select id, sold from ${tableName} where id = "${userId}"`);
 
         if (!user[0]) throw "User not found";
@@ -29,7 +29,7 @@ export default class Bank {
 
             let result = previousSold + transfertAmout;
 
-            if (result < 0) throw "Not enought money";
+            if (!force) if (result < 0) throw "Not enought money";
 
             return result;
         }
