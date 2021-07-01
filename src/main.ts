@@ -696,8 +696,8 @@ app.post(/^\/api\/sellers\/pay\/?$/i, authorizationMiddleware, (req, res) => {
         });
 });
 
-app.get(/^\/api\/search\/?(\S*)/i, (req, res) => {
-    Search.search(new URL("http://example.com" + req.url).searchParams.get("q") ?? "")
+app.get(/^\/api\/search\/?(\S*)$/i, (req, res) => {
+    Search.search(new URL("http://example.com" + req.url).searchParams.get("q") ?? undefined)
         .then(result => {
             res.json(result);
         })

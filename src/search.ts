@@ -6,11 +6,11 @@ export default class Search {
 
     static async init(db: mariadb.Pool) {
         this.db = db;
-
-        console.log(await this.search("livre sharpness V"));
     }
 
-    static async search(query: string) {
+    static async search(query?: string) {
+        if (!query) throw "Query required";
+
         query = query.toLowerCase();
 
         let tags = query.split(" ");
@@ -23,18 +23,34 @@ export default class Search {
             triables_items.push(new ItemTriable(item));
         });
 
+        let sorted = this.recursiveSearch(tags, triables_items);
+
+        return sorted.map(item => item.item.id);
+    }
+
+    private static recursiveSearch(tags: string[], items: ItemTriable[], recursiveCount = 0): ItemTriable[] {
+        if (recursiveCount > 5) {
+            console.warn("max search recursive count reached");
+            return items;
+        }
+
         tags.forEach(tag => {
-            triables_items.forEach(item => {
+            items.forEach(item => {
                 if (item.item.tags.includes(tag)) item.weight += 1;
             });
         });
 
-        let sorted = triables_items.sort((a, b) => b.weight - a.weight);
+        let notFound = items.filter(item => item.weight === 0);
+        items = items.filter(item => item.weight > 0);
 
-        console.log(sorted);
-        
+        if (items.length === 0) return notFound;
 
-        return sorted.map(item => item.item.id);
+        let sorted = items.sort((a, b) => b.weight - a.weight);
+
+        if (notFound.length > 0)
+            sorted = sorted.concat(this.recursiveSearch(sorted[0].item.tags, notFound, recursiveCount + 1));
+
+        return sorted;
     }
 }
 
