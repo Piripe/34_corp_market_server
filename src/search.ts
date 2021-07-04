@@ -25,9 +25,9 @@ export default class Search {
 			triables_items.push(new ItemTriable(item));
 		});
 
-		let sorted = this.recursiveTagsSearch(tags, triables_items, true);
+		let sorted = this.recursiveTagsSearch(tags, triables_items);
 
-        console.log(sorted.map(item => item.item.name));
+        console.log(sorted.map(item => item.item.name + " " + item.weight));
         
 
 		return sorted.map(item => item.item.id);
@@ -43,7 +43,7 @@ export default class Search {
 			items.forEach(item => {
 				item.item.tags.forEach(item_tag => {
 					let leven = this.levenshtein(tag, item_tag);
-					if (leven < (strict ? 1 : 4)) item.weight += 1 / leven + 1;
+					if (leven < (strict ? 1 : 4)) item.weight += 1 / (leven + 1);
 				});
 			});
 		});
