@@ -179,8 +179,9 @@ export default class Market {
 
         if (!sellerId) throw "You must work";
 
-        options.tags.forEach(tag => {
+        options.tags.forEach((tag, i) => {
             if (tag.includes(" ")) throw "Tag must not includes space";
+            options.tags[i] = options.tags[i].toLowerCase();
         });
 
         let item = await this.db.query(`select id from item where name = "${options.name}"`);
