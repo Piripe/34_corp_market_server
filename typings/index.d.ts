@@ -4,7 +4,7 @@ interface Item {
     description: string;
     thumbnail: string;
     stack: number;
-    tags: string[]
+    tags: string[];
 }
 
 interface ItemWithSellers {
@@ -14,7 +14,7 @@ interface ItemWithSellers {
     thumbnail: string;
     sellers: item_seller[];
     stack: number;
-    tags: string[]
+    tags: string[];
 }
 
 interface ItemCreationOptions {
@@ -25,7 +25,7 @@ interface ItemCreationOptions {
     price: number;
     stock: number;
     stack: number;
-    tags: string[]
+    tags: string[];
 }
 
 interface item_seller {
@@ -57,6 +57,7 @@ interface delivery_items {
     price: number;
     seller_id: string;
     stack: number;
+    seller_item_id: string;
 }
 
 interface Seller {

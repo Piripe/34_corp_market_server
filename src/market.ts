@@ -81,6 +81,7 @@ export default class Market {
             let i = (await this.getSeller_Item(item.id))[0];
             items.push({
                 id: item.id,
+                seller_item_id: i.seller_item_id,
                 quantity: item.quantity,
                 price: i.price,
                 seller_id: i.seller_id,

@@ -112,10 +112,12 @@ export default class Delivery {
     static async repayDelivery(delivery: delivery) {
         let taxe = Bank.calcTaxe(delivery.total);
 
-        await Bank.modifySold(delivery.client_id, delivery.total);
+        await Bank.modifySold(delivery.client_id, delivery.total - taxe);
 
         for (const item of delivery.items) {
             await Bank.modifySold(item.seller_id, -(item.price * item.quantity - taxe), "Seller", true);
+            let item_stock = (await Market.getSeller_Item(item.seller_item_id))[0].stock;
+            await Market.editSellerItemStock(item.seller_item_id, item.seller_id, item_stock + item.quantity);
         }
 
         let delivery_price = Market.calcDeliveryPrice(delivery.items);
