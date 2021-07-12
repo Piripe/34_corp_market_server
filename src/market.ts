@@ -182,12 +182,16 @@ export default class Market {
 
         if (!sellerId) throw "You must work";
 
+        let item = await this.db.query(
+            `select id, tags, description, thumbnail, stack from item where name = "${options.name}"`
+        );
+
+        Object.assign(options, item);
+
         options.tags.forEach((tag, i) => {
             if (tag.includes(" ")) throw "Tag must not includes space";
             options.tags[i] = options.tags[i].toLowerCase();
         });
-
-        let item = await this.db.query(`select id from item where name = "${options.name}"`);
 
         let itemId: number | null = null;
         if (item[0]) {

@@ -305,11 +305,6 @@ app.post(/^\/api\/market\/items\/new\/?$/i, authorizationMiddleware, (req, res) 
         return;
     }
 
-    if (!req.body.description) {
-        res.json({ error: "description is required in the body" });
-        return;
-    }
-
     if (!req.body.full_description) {
         res.json({ error: "full_description is required in the body" });
         return;
@@ -322,16 +317,6 @@ app.post(/^\/api\/market\/items\/new\/?$/i, authorizationMiddleware, (req, res) 
 
     if (!req.body.stock) {
         res.json({ error: "stock is required in the body" });
-        return;
-    }
-
-    if (!req.body.thumbnail) {
-        res.json({ error: "thumbnail is required in the body" });
-        return;
-    }
-
-    if (!req.body.stack) {
-        res.json({ error: "stack is required in the body" });
         return;
     }
 
