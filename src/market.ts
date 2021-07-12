@@ -74,10 +74,13 @@ export default class Market {
         );
     }
 
-    static async buy(userId: string, is: { id: string; quantity: number }[]) {
+    static async buy(
+        userId: string,
+        body: { items: { id: string; quantity: number }[]; extra_info: string | undefined }
+    ) {
         let items: delivery_items[] = [];
 
-        for (const item of is) {
+        for (const item of body.items) {
             let i = (await this.getSeller_Item(item.id))[0];
             items.push({
                 id: item.id,
@@ -131,7 +134,7 @@ export default class Market {
 
         await Bank.modifySold(userId, -delivery_price);
 
-        Delivery.createDelivery(userId, items, 0, total_sold);
+        Delivery.createDelivery(userId, items, 0, total_sold, body.extra_info || "");
 
         userHistory.add(userId, account_event_type.purchase, {
             totalSold: total_sold,
@@ -209,7 +212,9 @@ export default class Market {
 
     private static async createItem(options: ItemCreationOptions): Promise<number> {
         await this.db.query(
-            `insert into item (name, description, thumbnail, stack, tags) values ("${options.name}", "${options.description}", "${options.thumbnail}", "${options.stack}", "${options.tags.join(" ")}")`
+            `insert into item (name, description, thumbnail, stack, tags) values ("${options.name}", "${
+                options.description
+            }", "${options.thumbnail}", "${options.stack}", "${options.tags.join(" ")}")`
         );
         let id = await this.db.query(`SELECT id from item where name = "${options.name}"`);
         if (id[0]) return id[0].id;

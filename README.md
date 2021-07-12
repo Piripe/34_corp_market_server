@@ -76,7 +76,8 @@ crediFromSeller = 5
     command_date: date,
     status: nuber,
     priority: number,
-    total: number
+    total: number,
+    extra_info: string
 }
 ```
 
@@ -219,12 +220,15 @@ Authorization header nécessaire
 body:
 
 ```
-[
-    {
-        id: seller_item_id,
-        quantity: positive number
-    }
-]
+{
+    items: [
+        {
+            id: seller_item_id,
+            quantity: positive number
+        }
+    ],
+    extra_info: string
+}
 ```
 
 response (if success):

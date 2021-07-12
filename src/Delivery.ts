@@ -11,29 +11,35 @@ export default class Delivery {
         this.db = db;
     }
 
-    static async createDelivery(userId: string, items: delivery_items[], priority: number, totalSold: number) {
+    static async createDelivery(
+        userId: string,
+        items: delivery_items[],
+        priority: number,
+        totalSold: number,
+        extra_info: string
+    ) {
         await this.db.query(
-            `insert into delivery(client_id, items, priority, total) values ("${userId}",  '${JSON.stringify(
+            `insert into delivery(client_id, items, priority, total, extra_info) values ("${userId}",  '${JSON.stringify(
                 items
-            )}', "${priority}", "${totalSold}")`
+            )}', "${priority}", "${totalSold}", "${extra_info}")`
         );
     }
 
     static async getAll(userId: string): Promise<delivery[]> {
         return await this.db.query(
-            `select id, client_id, items, command_date, status, priority, deliveryman_id, total from delivery where client_id = "${userId}"`
+            `select id, client_id, items, command_date, status, priority, deliveryman_id, total, extra_info from delivery where client_id = "${userId}"`
         );
     }
 
     static async getForDelivery(): Promise<delivery[]> {
         return await this.db.query(
-            `select id, client_id, items, command_date, status, priority, deliveryman_id, total from delivery where status = "0"`
+            `select id, client_id, items, command_date, status, priority, deliveryman_id, total, extra_info from delivery where status = "0"`
         );
     }
 
     static async getAllForDeliveryMan(deliveryman_id: string): Promise<delivery[]> {
         return await this.db.query(
-            `select id, client_id, items, command_date, status, priority, deliveryman_id, total from delivery where deliveryman_id = "${deliveryman_id}"`
+            `select id, client_id, items, command_date, status, priority, deliveryman_id, total, extra_info from delivery where deliveryman_id = "${deliveryman_id}"`
         );
     }
 
@@ -46,7 +52,7 @@ export default class Delivery {
 
     static async getFromId(id: string): Promise<delivery> {
         let r = await this.db.query(
-            `select id, client_id, items, command_date, status, priority, deliveryman_id, total from delivery where id = "${id}"`
+            `select id, client_id, items, command_date, status, priority, deliveryman_id, total, extra_info from delivery where id = "${id}"`
         );
 
         if (!r[0]) throw "Not found";

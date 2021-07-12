@@ -275,8 +275,13 @@ app.post(/^\/api\/market\/buy\/?$/i, authorizationMiddleware, (req, res) => {
         return;
     }
 
-    if (!Array.isArray(req.body)) {
-        res.json({ error: "Body must be an array" });
+    if (!req.body.items) {
+        res.json({ error: "items is required in the body" });
+        return;
+    }
+
+    if (!Array.isArray(req.body.items)) {
+        res.json({ error: "Items must be an array" });
         return;
     }
 
